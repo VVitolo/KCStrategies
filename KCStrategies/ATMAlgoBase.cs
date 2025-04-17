@@ -60,7 +60,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private bool volMaDown;
 
         private Momentum Momentum1;
-        private double momentum;
+        private double currentMomentum;
         private bool momoUp;
         private bool momoDown;
 
@@ -69,6 +69,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private bool adxUp;
 
         private ATR ATR1;
+		private double currentAtr;
         private bool atrUp;
 
         private bool marketIsChoppy;
@@ -1084,9 +1085,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             Description =
                 @"Base Strategy with OEB v.5.0.2 TradeSaber(Dre). and ArchReactor for KC (Khanh Nguyen)";
             Name = "ATM AlgoBase";
-            BaseAlgoVersion = "ATM AlgoBase v5.3";
+            BaseAlgoVersion = "ATM AlgoBase v5.4";
             Author = "indiVGA, Khanh Nguyen, Oshi, MarketMath, based on ArchReactor";
-            Version = "Version 5.3 Apr. 2025";
+            Version = "Version 5.4 Apr. 2025";
             Credits = "";
             StrategyName = "";
             ChartType = "Orenko 34-40-40"; // TODO: Document Magic Numbers
@@ -1106,7 +1107,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             TraceOrders = false;
             RealtimeErrorHandling = RealtimeErrorHandling.StopCancelCloseIgnoreRejects;
             StopTargetHandling = StopTargetHandling.PerEntryExecution;
-            BarsRequiredToTrade = 50;
+            BarsRequiredToTrade = 120;
             IsInstantiatedOnEachOptimizationIteration = false;
 
             // Default Parameters
@@ -1157,14 +1158,14 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             enableADX = true;
             showAdx = false;
             adxPeriod = 7;
-            adxThreshold = 25;
+            AdxThreshold = 25;
             adxThreshold2 = 50;
 
             AtrPeriod = 14;
             atrThreshold = 1.5;
             enableVolatility = true;
 
-            LimitOffset = 4;
+            LimitOffset = 2;
             TickMove = 4;
             BreakevenOffset = 4;
 
@@ -1203,7 +1204,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             // PnL Daily Limits
             dailyLossProfit = true;
             DailyProfitLimit = 100000;
-            DailyLossLimit = 1000;
+            DailyLossLimit = 2000;
             TrailingDrawdown = 1000;
             StartTrailingDD = 3000;
             maxProfit = double.MinValue;
@@ -2011,14 +2012,15 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 	            // You could add a PrintOnce warning here if needed for debugging early bars.
 	            // ***** END MODIFIED SECTION for VMA *****
 
-                momentum = Momentum1[0];
+                currentMomentum = Momentum1[0];
                 momoUp = !enableMomo || (Momentum1[0] > MomoUp && Momentum1[0] > Momentum1[1]);
                 momoDown = !enableMomo || (Momentum1[0] < MomoDown && Momentum1[0] < Momentum1[1]);
 
                 currentAdx = ADX1[0];
-                adxUp = !enableADX || ADX1[0] > adxThreshold && ADX1[0] < adxThreshold2;
+                adxUp = !enableADX || ADX1[0] > AdxThreshold && ADX1[0] < adxThreshold2;
 
-                atrUp = !enableVolatility || ATR1[0] > atrThreshold;
+				currentAtr = ATR1[0];
+                atrUp = !enableVolatility || currentAtr > atrThreshold;
 
                 if (EnableChoppinessDetection)
                 {
@@ -2054,7 +2056,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                     // Inside OnBarUpdate, after marketIsChoppy is calculated:
                     if (marketIsChoppy) // Or your specific condition
                     {
-                        TransparentColor(128, Colors.LightGray);
+                        TransparentColor(64, Colors.LightGray);
                     }
                     else
                     {
@@ -2158,11 +2160,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 {
                     if (uptrend)
                     {
-                        TransparentColor(32, Colors.Lime);
+                        TransparentColor(64, Colors.Lime);
                     }
                     else if (downtrend)
                     {
-                        TransparentColor(32, Colors.Crimson);
+                        TransparentColor(64, Colors.Crimson);
                     }
                     else
                     {
@@ -3425,41 +3427,30 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             int buySellPressureRequiredBars = BarsRequiredToTrade; // Or specific period if known for BuySellPressure
 
             // Check CurrentBar against the required period (0-based index means CurrentBar >= Period - 1)
-            string adxText = CurrentBar >= adxPeriod - 1 ? currentAdx.ToString("F1") : "N/A";
-            string momoText = CurrentBar >= momentumPeriod - 1 ? momentum.ToString("F1") : "N/A";
-            // Assuming buyPressure/sellPressure series are populated when BuySellPressure1 is calculated in OnBarUpdate
-            string buyPressText =
-                CurrentBar >= buySellPressureRequiredBars - 1
-                    ? buyPressure[0].ToString("F1")
-                    : "N/A";
-            string sellPressText =
-                CurrentBar >= buySellPressureRequiredBars - 1
-                    ? sellPressure[0].ToString("F1")
-                    : "N/A";
-            // --- END FIXED INDICATOR VALUE DISPLAY ---
-
-
-            string realTimeTradeText =
-                $"{Account.Name} | {(Account.Connection != null ? Account.Connection.Options.Name : "N/A")} ({connectionStatus})\n"
-                + $"PnL Src: {pnlSource}\n"
-                + $"Real PnL:\t{accountRealized:C}\n"
-                + $"Unreal PnL:\t{accountUnrealized:C}\n"
-                + $"Total PnL:\t{accountTotal:C}\n"
-                + $"Daily PnL:\t{dailyPnL:C}\n"
-                + $"Max Profit:\t{(maxProfit == double.MinValue ? "N/A" : maxProfit.ToString("C"))}\n"
-                + $"-------------\n"
-                + $"ADX:\t\t{adxText}\n"
-                + // Use safe text
-                $"Momentum:\t{momoText}\n"
-                + // Use safe text
-                $"Buy Pressure:\t{buyPressText}\n"
-                + // Use safe text
-                $"Sell Pressure:\t{sellPressText}\n"
-                + // Use safe text
-                $"-------------\n"
-                + $"Trend:\t{trendStatus}\n"
-                + // Use overridden status
-                $"Signal:\t{signalStatus}"; // Use overridden status
+            string adxStatus = currentAdx > AdxThreshold ? $"Trending ({currentAdx:F1})" : $"Choppy ({currentAdx:F1})";
+			string momoStatus = currentMomentum > 0 ? $"Up ({currentMomentum:F1})" : currentMomentum < 0 ? $"Down ({currentMomentum:F1})" : $"Neutral ({currentMomentum:F1})";
+		    // Assuming buyPressure/sellPressure series are populated when BuySellPressure1 is calculated in OnBarUpdate
+		    string buyPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? buyPressure[0].ToString("F1") : "N/A";
+		    string sellPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? sellPressure[0].ToString("F1") : "N/A";
+		    // --- END FIXED INDICATOR VALUE DISPLAY ---
+		
+		    string realTimeTradeText =
+		        $"{Account.Name} | {(Account.Connection != null ? Account.Connection.Options.Name : "N/A")} ({connectionStatus})\n" +
+		        $"PnL Src: {pnlSource}\n" +
+		        $"Real PnL:\t{accountRealized:C}\n" +
+		        $"Unreal PnL:\t{accountUnrealized:C}\n" +
+		        $"Total PnL:\t{accountTotal:C}\n" +
+		        $"Daily PnL:\t{dailyPnL:C}\n" +
+		        $"Max Profit:\t{(maxProfit == double.MinValue ? "N/A" : maxProfit.ToString("C"))}\n" +
+		        $"-------------\n" +
+		        $"ADX:\t\t{adxStatus}\n" +             // Use safe text
+		        $"Momentum:\t{momoStatus}\n" +           // Use safe text
+		        $"Buy Pressure:\t{buyPressText}\n" +   // Use safe text
+		        $"Sell Pressure:\t{sellPressText}\n" +  // Use safe text
+				$"ATR:\t\t{currentAtr:F2}\n" +
+		        $"-------------\n" +
+		        $"Trend:\t{trendStatus}\n" +      // Use overridden status
+		        $"Signal:\t{signalStatus}";       // Use overridden status
 
             SimpleFont font = new SimpleFont("Arial", 16);
             Brush pnlColor =
@@ -4081,7 +4072,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         [NinjaScriptProperty]
         [Range(1, int.MaxValue)]
         [Display(Name = "ADX Threshold", Order = 23, GroupName = "08b. Default Settings")]
-        public int adxThreshold { get; set; }
+        public int AdxThreshold { get; set; }
 
         [NinjaScriptProperty]
         [Range(1, int.MaxValue)]
