@@ -300,7 +300,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 TraceOrders 								= false;
                 RealtimeErrorHandling 						= RealtimeErrorHandling.StopCancelCloseIgnoreRejects;
                 StopTargetHandling 							= StopTargetHandling.PerEntryExecution;
-                BarsRequiredToTrade 						= 120;
+                BarsRequiredToTrade 						= 50;
 				RealtimeErrorHandling 						= RealtimeErrorHandling.StopCancelClose; // important to manage errors on rogue orders
                 IsInstantiatedOnEachOptimizationIteration 	= false;
 				
@@ -321,6 +321,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		        marketIsChoppy          		= false;
 		        autoDisabledByChop      		= false;
 				enableBackgroundSignal			= true;
+				Opacity							= 50;       // Byte: 255 opaque
 				
 				enableBuySellPressure 			= true;
 				showBuySellPressure 			= false;
@@ -419,10 +420,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				threeStepTrail					= false;
 				step1ProfitTrigger 				= 1;	// Set your step 1 profit trigger
                 step1StopLoss 					= 97;	// Set your step 1 stop loss
-                step2ProfitTrigger 				= 32;	// Set your step 2 profit trigger
-                step2StopLoss 					= 32;	// Set your step 2 stop loss
-				step3ProfitTrigger 				= 48;	// Set your step 3 profit trigger
-				step3StopLoss 					= 4;	// Set your step 3 stop loss
+                step2ProfitTrigger 				= 44;	// Set your step 2 profit trigger
+                step2StopLoss 					= 40;	// Set your step 2 stop loss
+				step3ProfitTrigger 				= 52;	// Set your step 3 profit trigger
+				step3StopLoss 					= 16;	// Set your step 3 stop loss
 //				step1Frequency					= 4;
 //				step2Frequency					= 4;
 //				step3Frequency					= 2;
@@ -465,7 +466,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				// PnL Daily Limits
 				dailyLossProfit					= true;
 				DailyProfitLimit				= 100000;
-				DailyLossLimit					= 2000;				
+				DailyLossLimit					= 1000;				
 				TrailingDrawdown				= 1000;
 				StartTrailingDD					= 3000;
 				maxProfit 						= double.MinValue;	// double.MinValue guarantees that any totalPnL will trigger it to set the variable
@@ -692,7 +693,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				// Inside OnBarUpdate, after marketIsChoppy is calculated:
 				if (marketIsChoppy) // Or your specific condition
 				{
-					TransparentColor(64, Colors.LightGray);					
+					TransparentColor(Opacity, Colors.LightGray);					
 				}
 				else
 				{
@@ -763,11 +764,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			{
 				if (uptrend)
 				{				  
-					TransparentColor(64, Colors.Lime);
+					TransparentColor(Opacity, Colors.Lime);
 				}
 				else if (downtrend)
 				{			
-					TransparentColor(64, Colors.Crimson);
+					TransparentColor(Opacity, Colors.Crimson);
 				}
 				else
 				{
@@ -3880,6 +3881,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		    string buyPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? buyPressure[0].ToString("F1") : "N/A";
 		    string sellPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? sellPressure[0].ToString("F1") : "N/A";
 		    // --- END FIXED INDICATOR VALUE DISPLAY ---
+
 		
 		    string realTimeTradeText =
 		        $"{Account.Name} | {(Account.Connection != null ? Account.Connection.Options.Name : "N/A")} ({connectionStatus})\n" +
@@ -4569,8 +4571,15 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		public bool enableBackgroundSignal
 		{ get; set; }
 		
+		// New 04/18/2025
+        [NinjaScriptProperty]
+		[Range(0, 360)]
+		[Display(Name = "Background Opacity", Description = "Background Opacity", Order = 10, GroupName = "03. Order Management")]
+		public byte Opacity { get; set; }		
+		
+		
 		[NinjaScriptProperty]
-		[Display(Name = "Enable Exit", Description = "Enable Exit", Order = 10, GroupName = "03. Order Management")]
+		[Display(Name = "Enable Exit", Description = "Enable Exit", Order = 11, GroupName = "03. Order Management")]
 		[RefreshProperties(RefreshProperties.All)]
 		public bool enableExit
 		{ get; set; }
