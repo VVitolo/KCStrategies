@@ -27,7 +27,7 @@ using WilliamR = NinjaTrader.NinjaScript.Indicators.TradeSaber_SignalMod.TOWilli
 
 namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 {
-    public abstract class ATMAlgoBase : Strategy, ICustomTypeDescriptor //
+    public abstract class ATMAlgoBase2 : Strategy, ICustomTypeDescriptor //
     {
         #region Variables
 
@@ -38,11 +38,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private DateTime lastEntryTime;
 
         // Indicator Variables
-        private BlueZ.BlueZHMAHooks hullMAHooks;
-        private bool hmaHooksUp;
-        private bool hmaHooksDown;
-        private bool hmaUp;
-        private bool hmaDown;
+//        private BlueZ.BlueZHMAHooks hullMAHooks;
+//        private bool hmaHooksUp;
+//        private bool hmaHooksDown;
+//        private bool hmaUp;
+//        private bool hmaDown;
 
         private BuySellPressure BuySellPressure1;
         private Series<double> buyPressure;
@@ -55,12 +55,12 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private bool regChanUp;
         private bool regChanDown;
 
-        private VMA VMA1;
-        private bool volMaUp;
-        private bool volMaDown;
+//        private VMA VMA1;
+//        private bool volMaUp;
+//        private bool volMaDown;
 
         private Momentum Momentum1;
-        private double currentMomentum;
+        public double currentMomentum;
         private bool momoUp;
         private bool momoDown;
 
@@ -77,7 +77,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private bool extraSeriesValid = true;
 
         // Trend Variables
-		public bool enableTrend;
         public bool uptrend;
         public bool downtrend;
 
@@ -1136,25 +1135,25 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             enableBuySellPressure = true;
             showBuySellPressure = false;
 
-            HmaPeriod = 16;
-            enableHmaHooks = true;
-            showHmaHooks = true;
+//            HmaPeriod = 16;
+//            enableHmaHooks = false;
+//            showHmaHooks = false;
 
-            RegChanPeriod = 40;
-            RegChanWidth = 4;
-            RegChanWidth2 = 3;
-            enableRegChan1 = true;
-            enableRegChan2 = true;
-            showRegChan1 = true;
-            showRegChan2 = true;
-            showRegChanHiLo = true;
+            RegChanPeriod = 20;
+            RegChanWidth = 5;
+            RegChanWidth2 = 4;
+            enableRegChan1 = false;
+            enableRegChan2 = false;
+            showRegChan1 = false;
+            showRegChan2 = false;
+            showRegChanHiLo = false;
 
-            enableVMA = true;
-            showVMA = true;
+//            enableVMA = false;
+//            showVMA = false;
 
             MomoUp = 1;
             MomoDown = -1;
-            enableMomo = true;
+            enableMomo = false;
             showMomo = false;
 
             enableADX = true;
@@ -1167,7 +1166,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             atrThreshold = 1.5;
             enableVolatility = true;
 
-            LimitOffset = 2;
+            LimitOffset = 4;
             TickMove = 4;
             BreakevenOffset = 4;
 
@@ -1847,20 +1846,20 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
         private void initializeIndicators()
         {
-            hullMAHooks = BlueZHMAHooks(
-                Close,
-                HmaPeriod,
-                0,
-                false,
-                false,
-                true,
-                Brushes.Lime,
-                Brushes.Red
-            );
-            hullMAHooks.Plots[0].Brush = Brushes.White;
-            hullMAHooks.Plots[0].Width = 2;
-            if (showHmaHooks)
-                AddChartIndicator(hullMAHooks);
+//            hullMAHooks = BlueZHMAHooks(
+//                Close,
+//                HmaPeriod,
+//                0,
+//                false,
+//                false,
+//                true,
+//                Brushes.Lime,
+//                Brushes.Red
+//            );
+//            hullMAHooks.Plots[0].Brush = Brushes.White;
+//            hullMAHooks.Plots[0].Width = 2;
+//            if (showHmaHooks)
+//                AddChartIndicator(hullMAHooks);
 
             RegressionChannel1 = RegressionChannel(Close, RegChanPeriod, RegChanWidth);
             if (showRegChan1)
@@ -1874,7 +1873,13 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 Close,
                 RegChanPeriod,
                 RegChanWidth
-            );
+            );	
+			
+			RegressionChannelHighLow1.Plots[1].Width = 2;
+            RegressionChannelHighLow1.Plots[1].Brush = Brushes.Yellow;
+			RegressionChannelHighLow1.Plots[2].Width = 2;
+            RegressionChannelHighLow1.Plots[2].Brush = Brushes.Yellow;
+			
             if (showRegChanHiLo)
                 AddChartIndicator(RegressionChannelHighLow1);
 
@@ -1892,11 +1897,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             if (showMomo)
                 AddChartIndicator(Momentum1);
 
-            VMA1 = VMA(Close, 9, 9);
-            VMA1.Plots[0].Brush = Brushes.SkyBlue;
-            VMA1.Plots[0].Width = 3;
-            if (showVMA)
-                AddChartIndicator(VMA1);
+//            VMA1 = VMA(Close, 9, 9);
+//            VMA1.Plots[0].Brush = Brushes.SkyBlue;
+//            VMA1.Plots[0].Width = 3;
+//            if (showVMA)
+//                AddChartIndicator(VMA1);
 
             ADX1 = ADX(Close, adxPeriod);
             ADX1.Plots[0].Brush = Brushes.Cyan;
@@ -1995,21 +2000,21 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                     !enableBuySellPressure
                     || (BuySellPressure1.SellPressure[0] > BuySellPressure1.BuyPressure[0]);
 
-                hmaUp = (hullMAHooks[0] > hullMAHooks[1]);
-                hmaDown = (hullMAHooks[0] < hullMAHooks[1]);
+//                hmaUp = (hullMAHooks[0] > hullMAHooks[1]);
+//                hmaDown = (hullMAHooks[0] < hullMAHooks[1]);
 
 	            // ***** START MODIFIED SECTION for VMA *****
 	            // Default values in case VMA isn't ready
-	            volMaUp = false;
-	            volMaDown = false;
+//	            volMaUp = false;
+//	            volMaDown = false;
 	
-	            // Check if VMA1 is initialized and has calculated enough data for index 1
-	            if (VMA1 != null && VMA1.IsValidDataPoint(1)) // IsValidDataPoint checks index validity
-	            {
-	                // Safe to access VMA1[0] and VMA1[1]
-	                volMaUp = !enableVMA || VMA1[0] > VMA1[1];
-	                volMaDown = !enableVMA || VMA1[0] < VMA1[1];
-	            }
+//	            // Check if VMA1 is initialized and has calculated enough data for index 1
+//	            if (VMA1 != null && VMA1.IsValidDataPoint(1)) // IsValidDataPoint checks index validity
+//	            {
+//	                // Safe to access VMA1[0] and VMA1[1]
+//	                volMaUp = !enableVMA || VMA1[0] > VMA1[1];
+//	                volMaDown = !enableVMA || VMA1[0] < VMA1[1];
+//	            }
 	            // else: Keep the default false values calculated above if VMA isn't ready.
 	            // You could add a PrintOnce warning here if needed for debugging early bars.
 	            // ***** END MODIFIED SECTION for VMA *****
@@ -2031,7 +2036,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
                     // Check if enough bars exist for slope calculation AND for ADX
                     if (
-                        CurrentBar >= Math.Max(RegChanPeriod, Math.Max(adxPeriod, SlopeLookBack)) - 1
+                        CurrentBar
+                        >= Math.Max(RegChanPeriod, Math.Max(adxPeriod, SlopeLookBack)) - 1
                     )
                     {
                         double middleNow = RegressionChannel1.Middle[0];
@@ -2067,27 +2073,25 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
                     if (marketIsChoppy)
                     {
-//                        if (isAutoTradeEnabled) // Only act if it was enabled
-//                        {
-//                            isAutoTradeEnabled = false;
-//                            autoDisabledByChop = true; // Mark that the *system* disabled it
-//                            autoStatusChanged = true;
-							enableTrend = false;
-							
-                            Print($"{Time[0]}: Market choppy (ADX={currentAdx:F1} < {ChopAdxThreshold}, BBWidth Factor < {FlatSlopeFactor:P0}). Auto trading DISABLED.");
-//                        }
+                        if (isAutoTradeEnabled) // Only act if it was enabled
+                        {
+                            isAutoTradeEnabled = false;
+                            autoDisabledByChop = true; // Mark that the *system* disabled it
+                            autoStatusChanged = true;
+                            Print(
+                                $"{Time[0]}: Market choppy (ADX={currentAdx:F1} < {ChopAdxThreshold}, BBWidth Factor < {FlatSlopeFactor:P0}). Auto trading DISABLED."
+                            );
+                        }
                     }
                     else // Market is NOT choppy
                     {
-//                        if (autoDisabledByChop) // Only re-enable if *system* disabled it
-//                        {
-////                            isAutoTradeEnabled = true;
-//                            autoDisabledByChop = false; // Clear the flag
-//                            autoStatusChanged = true;
-							enableTrend = true;
-							
+                        if (autoDisabledByChop) // Only re-enable if *system* disabled it
+                        {
+                            isAutoTradeEnabled = true;
+                            autoDisabledByChop = false; // Clear the flag
+                            autoStatusChanged = true;
                             Print($"{Time[0]}: Market no longer choppy. Auto trading RE-ENABLED.");
-//                        }
+                        }
                         // If autoDisabledByChop is false, it means the user turned it off manually, so we leave it off.
                     }
 
@@ -2111,16 +2115,23 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                     }
                 }
 
-				if (enableTrend)
-				{
-	                uptrend = momoUp && buyPressureUp && hmaUp && volMaUp && regChanUp && adxUp && atrUp;
-	                downtrend = momoDown && sellPressureUp && hmaDown && volMaDown && regChanDown && adxUp && atrUp;
-				}
-				else
-				{
-					uptrend = buyPressureUp && adxUp && atrUp;
-	                downtrend = sellPressureUp && adxUp && atrUp;
-				}
+                uptrend =
+                    buyPressureUp 
+					&& adxUp 
+					&& atrUp;
+//					&& momoUp 
+//					&& hmaUp 
+//					&& volMaUp
+//					&& regChanUp 
+				
+                downtrend =
+                    sellPressureUp
+                    && adxUp
+                    && atrUp;
+//                    && momoDown
+//                    && hmaDown
+//                    && volMaDown
+//                    && regChanDown
 
                 priceUp = Close[0] > Close[1] && Close[0] > Open[0];
                 priceDown = Close[0] < Close[1] && Close[0] < Open[0];
@@ -2159,6 +2170,14 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                     ProcessShortEntry();
                 }
 
+				if (enableExit)
+				{
+					if (ValidateExitLong() || ValidateExitShort())
+					{
+						CloseAllPositions();
+					}
+				}
+				
                 if (enableBackgroundSignal)
                 {
                     if (uptrend)
@@ -2289,7 +2308,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 && ((dailyLossProfit ? dailyPnL > -DailyLossLimit : true))
                 && ((dailyLossProfit ? dailyPnL < DailyProfitLimit : true))
                 && (isFlat)
-                && (uptrend)
+				&& (uptrend)
                 && (priceUp)
                 && (!trailingDrawdownReached)
                 && (canTradeOK)
@@ -2306,7 +2325,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 && ((dailyLossProfit ? dailyPnL > -DailyLossLimit : true))
                 && ((dailyLossProfit ? dailyPnL < DailyProfitLimit : true))
                 && (isFlat)
-                && (downtrend)
+				&& (downtrend)
                 && (priceDown)
                 && (!trailingDrawdownReached)
                 && (canTradeOK)
@@ -2417,14 +2436,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             if (signalName == LongEntryLabel)
                 Draw.ArrowUp(this, signalName + CurrentBars[0], false, 0, signalPrice, signalBrush);
             else if (signalName == ShortEntryLabel)
-                Draw.ArrowDown(
-                    this,
-                    signalName + CurrentBars[0],
-                    false,
-                    0,
-                    signalPrice,
-                    signalBrush
-                );
+                Draw.ArrowDown(this, signalName + CurrentBars[0], false, 0, signalPrice, signalBrush);
         }
 
         private void UpdateAtmStrategyStatus()
@@ -3407,7 +3419,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             if (orderErrorOccurred)
                 signalStatus = "Order Error!";
             if (enableTrailingDD && trailingDrawdownReached)
-                signalStatus = "DD Limit Hit";
+                signalStatus = "Drawdown Limit Hit";
             if (dailyLossProfit && dailyPnL <= -DailyLossLimit)
                 signalStatus = "Loss Limit Hit";
             if (dailyLossProfit && dailyPnL >= DailyProfitLimit)
@@ -3967,25 +3979,25 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         [Display(Name = "Show Buy Sell Pressure", Order = 2, GroupName = "08b. Default Settings")]
         public bool showBuySellPressure { get; set; }
 
-        [NinjaScriptProperty]
-        [Display(Name = "Enable VMA", Order = 3, GroupName = "08b. Default Settings")]
-        public bool enableVMA { get; set; }
+//        [NinjaScriptProperty]
+//        [Display(Name = "Enable VMA", Order = 3, GroupName = "08b. Default Settings")]
+//        public bool enableVMA { get; set; }
 
-        [NinjaScriptProperty]
-        [Display(Name = "Show VMA", Order = 4, GroupName = "08b. Default Settings")]
-        public bool showVMA { get; set; }
+//        [NinjaScriptProperty]
+//        [Display(Name = "Show VMA", Order = 4, GroupName = "08b. Default Settings")]
+//        public bool showVMA { get; set; }
 
-        [NinjaScriptProperty]
-        [Display(Name = "Enable Hooker", Order = 5, GroupName = "08b. Default Settings")]
-        public bool enableHmaHooks { get; set; }
+//        [NinjaScriptProperty]
+//        [Display(Name = "Enable Hooker", Order = 5, GroupName = "08b. Default Settings")]
+//        public bool enableHmaHooks { get; set; }
 
-        [NinjaScriptProperty]
-        [Display(Name = "Show HMA Hooks", Order = 6, GroupName = "08b. Default Settings")]
-        public bool showHmaHooks { get; set; }
+//        [NinjaScriptProperty]
+//        [Display(Name = "Show HMA Hooks", Order = 6, GroupName = "08b. Default Settings")]
+//        public bool showHmaHooks { get; set; }
 
-        [NinjaScriptProperty]
-        [Display(Name = "HMA Period", Order = 7, GroupName = "08b. Default Settings")]
-        public int HmaPeriod { get; set; }
+//        [NinjaScriptProperty]
+//        [Display(Name = "HMA Period", Order = 7, GroupName = "08b. Default Settings")]
+//        public int HmaPeriod { get; set; }
 
         [NinjaScriptProperty]
         [Display(Name = "Enable KingKhanh", Order = 8, GroupName = "08b. Default Settings")]
@@ -4139,7 +4151,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         [NinjaScriptProperty]
         [Display(
             Name = "Enable Background Color Signal",
-            Description = "Enable Exit",
+            Description = "Enable Background Color",
             Order = 5,
             GroupName = "09. Market Condition"
         )]

@@ -29,12 +29,12 @@ using RegressionChannel = NinjaTrader.NinjaScript.Indicators.RegressionChannel;
 
 namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 {
-    abstract public class KCAlgoBase : Strategy, ICustomTypeDescriptor
+    abstract public class KCAlgoBase2 : Strategy, ICustomTypeDescriptor
     {
         #region Variables
 		
         private DateTime lastEntryTime;
-        private readonly TimeSpan tradeDelay = TimeSpan.FromSeconds(10);	
+        private readonly TimeSpan tradeDelay = TimeSpan.FromSeconds(30);	
 		
         // Dictionary to track messages printed by PrintOnce (Key = message key, Value = bar number printed)
         private Dictionary<string, int> printedMessages = new Dictionary<string, int>();
@@ -42,9 +42,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		private bool autoDisabledByChop; // Tracks if Auto was turned off by the system due to chop
 
         // Indicator Variables
-        private BlueZ.BlueZHMAHooks hullMAHooks;
-        private bool hmaUp;
-        private bool hmaDown;
+//        private BlueZ.BlueZHMAHooks hullMAHooks;
+//        private bool hmaUp;
+//        private bool hmaDown;
 
         private BuySellPressure BuySellPressure1;
         private bool buyPressureUp;
@@ -57,9 +57,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private bool regChanUp;
         private bool regChanDown;
 
-        private VMA VMA1;
-        private bool volMaUp;
-        private bool volMaDown;
+//        private VMA VMA1;
+//        private bool volMaUp;
+//        private bool volMaDown;
 
         private NTSvePivots pivots;
         private double pivotPoint, s1, s2, s3, r1, r2, r3, s1m, s2m, s3m, r1m, r2m, r3m;
@@ -77,11 +77,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		private double currentAtr;
         private bool atrUp;
 
-        private bool aboveEMAHigh;
-        private bool belowEMALow;
+//        private bool aboveEMAHigh;
+//        private bool belowEMALow;
 
-        private bool uptrend;
-        private bool downtrend;
+        public bool uptrend;
+        public bool downtrend;
 
         private bool priceUp;
         private bool priceDown;
@@ -275,8 +275,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             if (State == State.SetDefaults)
             {
 				Description									= @"Base Strategy with OEB v.5.0.2 TradeSaber(Dre). and ArchReactor for KC (Khanh Nguyen)";
-				Name										= "KCAlgoBase";
-				BaseAlgoVersion								= "KCAlgoBase v5.5";
+				Name										= "KCAlgoBase2";
+				BaseAlgoVersion								= "KCAlgoBase2 v.5.5";
 				Author										= "indiVGA, Khanh Nguyen, Oshi, based on ArchReactor";
 				Version										= "Version 5.5 Apr. 2025";
 				Credits										= "";
@@ -326,51 +326,51 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				enableBuySellPressure 			= true;
 				showBuySellPressure 			= false;
 				
-				HmaPeriod 						= 16;
-				enableHmaHooks 					= true;
-				showHmaHooks 					= true;
+//				HmaPeriod 						= 16;
+//				enableHmaHooks 					= false;
+//				showHmaHooks 					= false;
 	
-				RegChanPeriod 					= 40;
-				RegChanWidth 					= 4;
-				RegChanWidth2 					= 3;
+				RegChanPeriod 					= 20;
+				RegChanWidth 					= 5;
+				RegChanWidth2 					= 4;
 				enableRegChan1 					= true;
 				enableRegChan2 					= true;
 				showRegChan1 					= true;
 				showRegChan2 					= true;
 				showRegChanHiLo 				= true;
 
-				enableVMA						= true;
-				showVMA							= true;
+//				enableVMA						= false;
+//				showVMA							= false;
 				
 				MomoUp							= 1;
 				MomoDown						= -1;
-				enableMomo						= true;
+				enableMomo						= false;
 				showMomo						= false;
 				
 				adxPeriod						= 7;
 				AdxThreshold					= 25;
 				adxThreshold2					= 50;
 				adxExitThreshold				= 45;
-				enableADX						= true;
+				enableADX						= false;
 				showAdx							= false;
 				
-				emaLength						= 110;
-				enableEMAFilter 				= false;
-				showEMA							= false;
+//				emaLength						= 110;
+//				enableEMAFilter 				= false;
+//				showEMA							= false;
 				
 				AtrPeriod						= 14;
 				atrThreshold					= 1.5;
-				enableVolatility				= true;
+				enableVolatility				= false;
 				
 				showPivots						= false;
 				
-				enableExit						= false;
+				enableExit						= true;
 				
 				LimitOffset						= 4;
 				TickMove						= 4;								
 						
                 MinRegChanTargetDistanceTicks = 60; // Example: Require at least 40 ticks for target
-                MinRegChanStopDistanceTicks   = 97; // Example: Require at least 80 ticks distance for stop
+                MinRegChanStopDistanceTicks   = 120; // Example: Require at least 80 ticks distance for stop
 				
 				EnableFixedProfitTarget			= true; // Default
                 EnableRegChanProfitTarget       = false; 
@@ -396,7 +396,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				BESetAuto						= true;
 				beSetAuto						= true;
 				showctrlBESetAuto				= true;
-				BE_Trigger						= 36;
+				BE_Trigger						= 40;
 				BE_Offset						= 0;
 				_beRealized						= false;
 
@@ -420,8 +420,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				threeStepTrail					= false;
 				step1ProfitTrigger 				= 1;	// Set your step 1 profit trigger
                 step1StopLoss 					= 97;	// Set your step 1 stop loss
-                step2ProfitTrigger 				= 36;	// Set your step 2 profit trigger
-                step2StopLoss 					= 36;	// Set your step 2 stop loss
+                step2ProfitTrigger 				= 40;	// Set your step 2 profit trigger
+                step2StopLoss 					= 40;	// Set your step 2 stop loss
 				step3ProfitTrigger 				= 100;	// Set your step 3 profit trigger
 				step3StopLoss 					= 30;	// Set your step 3 stop loss
 //				step1Frequency					= 4;
@@ -490,10 +490,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             }
             else if (State == State.DataLoaded)
             {	
-				hullMAHooks = BlueZHMAHooks(Close, HmaPeriod, 0, false, false, true, Brushes.Lime, Brushes.Red);
-				hullMAHooks.Plots[0].Brush = Brushes.White;
-				hullMAHooks.Plots[0].Width = 2;
-				if (showHmaHooks) AddChartIndicator(hullMAHooks);
+//				hullMAHooks = BlueZHMAHooks(Close, HmaPeriod, 0, false, false, true, Brushes.Lime, Brushes.Red);
+//				hullMAHooks.Plots[0].Brush = Brushes.White;
+//				hullMAHooks.Plots[0].Width = 2;
+//				if (showHmaHooks) AddChartIndicator(hullMAHooks);
 	
 				RegressionChannel1 = RegressionChannel(Close, RegChanPeriod, RegChanWidth);
 				if (showRegChan1) AddChartIndicator(RegressionChannel1);
@@ -502,6 +502,12 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				if (showRegChan2) AddChartIndicator(RegressionChannel2);
 	
 				RegressionChannelHighLow1 = RegressionChannelHighLow(Close, RegChanPeriod, RegChanWidth);
+				
+				RegressionChannelHighLow1.Plots[1].Width = 2;
+	            RegressionChannelHighLow1.Plots[1].Brush = Brushes.Yellow;
+				RegressionChannelHighLow1.Plots[2].Width = 2;
+	            RegressionChannelHighLow1.Plots[2].Brush = Brushes.Yellow;
+			
 				if (showRegChanHiLo) AddChartIndicator(RegressionChannelHighLow1);
 	
 				BuySellPressure1				= BuySellPressure(Close);
@@ -511,10 +517,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				BuySellPressure1.Plots[1].Brush = Brushes.Red;
 				if (showBuySellPressure) AddChartIndicator(BuySellPressure1);
 			
-				VMA1				= VMA(Close, 9, 9);
-				VMA1.Plots[0].Brush = Brushes.SkyBlue;
-				VMA1.Plots[0].Width = 3;
-				if (showVMA) AddChartIndicator(VMA1);			
+//				VMA1				= VMA(Close, 9, 9);
+//				VMA1.Plots[0].Brush = Brushes.SkyBlue;
+//				VMA1.Plots[0].Width = 3;
+//				if (showVMA) AddChartIndicator(VMA1);			
 				
 				ATR1 	= ATR(AtrPeriod);
 				        
@@ -532,11 +538,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				pivots.Plots[0].Width = 4;
 				if (showPivots) AddChartIndicator(pivots);
 				
-				if(showEMA) 
-				{
-					AddChartIndicator(EMA(High, emaLength));
-					AddChartIndicator(EMA(Low, emaLength));
-				}
+//				if(showEMA) 
+//				{
+//					AddChartIndicator(EMA(High, emaLength));
+//					AddChartIndicator(EMA(Low, emaLength));
+//				}
 					
 				if (additionalContractExists)
 			    {
@@ -640,27 +646,27 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			buyPressure[0] = BuySellPressure1.BuyPressure[0];
 			sellPressure[0] = BuySellPressure1.SellPressure[0];
 			
-			hmaUp = (hullMAHooks[0] > hullMAHooks[1]);
-			hmaDown = (hullMAHooks[0] < hullMAHooks[1]);
+//			hmaUp = (hullMAHooks[0] > hullMAHooks[1]);
+//			hmaDown = (hullMAHooks[0] < hullMAHooks[1]);
 			
             // ***** START MODIFIED SECTION for VMA *****
             // Default values in case VMA isn't ready
-            volMaUp = false;
-            volMaDown = false;
+//            volMaUp = false;
+//            volMaDown = false;
 
-            // Check if VMA1 is initialized and has calculated enough data for index 1
-            if (VMA1 != null && VMA1.IsValidDataPoint(1)) // IsValidDataPoint checks index validity
-            {
-                // Safe to access VMA1[0] and VMA1[1]
-                volMaUp = !enableVMA || VMA1[0] > VMA1[1];
-                volMaDown = !enableVMA || VMA1[0] < VMA1[1];
-            }
+//            // Check if VMA1 is initialized and has calculated enough data for index 1
+//            if (VMA1 != null && VMA1.IsValidDataPoint(1)) // IsValidDataPoint checks index validity
+//            {
+//                // Safe to access VMA1[0] and VMA1[1]
+//                volMaUp = !enableVMA || VMA1[0] > VMA1[1];
+//                volMaDown = !enableVMA || VMA1[0] < VMA1[1];
+//            }
             // else: Keep the default false values calculated above if VMA isn't ready.
             // You could add a PrintOnce warning here if needed for debugging early bars.
             // ***** END MODIFIED SECTION for VMA *****
 
-			aboveEMAHigh = !enableEMAFilter || Open[1] > EMA(High, emaLength)[1];
-			belowEMALow = !enableEMAFilter || Open[1] < EMA(Low, emaLength)[1];
+//			aboveEMAHigh = !enableEMAFilter || Open[1] > EMA(High, emaLength)[1];
+//			belowEMALow = !enableEMAFilter || Open[1] < EMA(Low, emaLength)[1];
 			
 			if (EnableChoppinessDetection)
 			{
@@ -735,8 +741,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			    }
 			}
 			
-			uptrend = adxUp && momoUp && buyPressureUp && hmaUp && volMaUp && regChanUp && atrUp && aboveEMAHigh;
-            downtrend = adxUp && momoDown && sellPressureUp && hmaDown && volMaDown && regChanDown && atrUp && belowEMALow;
+			uptrend = buyPressureUp && adxUp && atrUp;
+            downtrend = sellPressureUp && adxUp && atrUp;
+			
+//			uptrend = adxUp && momoUp && buyPressureUp && hmaUp && volMaUp && regChanUp && atrUp && aboveEMAHigh;
+//            downtrend = adxUp && momoDown && sellPressureUp && hmaDown && volMaDown && regChanDown && atrUp && belowEMALow;
 			
 			if (RegressionChannel1.Middle[0] > RegressionChannel1.Middle[20])
 			{
@@ -1550,7 +1559,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                    && checkTimers()
                    && (dailyLossProfit ? dailyPnL > -DailyLossLimit && dailyPnL < DailyProfitLimit : true)
                    && isFlat
-                   && uptrend
+				   && uptrend
                    && !trailingDrawdownReached
                    && (iBarsSinceExit > 0 ? BarsSinceExitExecution(0, "", 0) > iBarsSinceExit : BarsSinceExitExecution(0, "", 0) > 1 || BarsSinceExitExecution(0, "", 0) == -1)
                    && canTradeOK
@@ -2758,8 +2767,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			public string Name { get; set; }
 			public string Content { get; set; }
 			public string ToolTip { get; set; }
-			public Action<KCAlgoBase, System.Windows.Controls.Button> InitialDecoration { get; set; }
-			public Action<KCAlgoBase> ClickAction { get; set; } // Action to perform when clicked
+			public Action<KCAlgoBase2, System.Windows.Controls.Button> InitialDecoration { get; set; }
+			public Action<KCAlgoBase2> ClickAction { get; set; } // Action to perform when clicked
 		}
 
 		private void InitializeButtonDefinitions()
@@ -3881,7 +3890,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		    string buyPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? buyPressure[0].ToString("F1") : "N/A";
 		    string sellPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? sellPressure[0].ToString("F1") : "N/A";
 		    // --- END FIXED INDICATOR VALUE DISPLAY ---
-
 		
 		    string realTimeTradeText =
 		        $"{Account.Name} | {(Account.Connection != null ? Account.Connection.Options.Name : "N/A")} ({connectionStatus})\n" +
@@ -4721,25 +4729,25 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		[Display(Name = "Show Buy Sell Pressure", Order = 2, GroupName = "08b. Default Settings")]
 		public bool showBuySellPressure { get; set; }
 	
-		[NinjaScriptProperty]
-		[Display(Name = "Enable VMA", Order = 3, GroupName = "08b. Default Settings")]
-		public bool enableVMA { get; set; }
+//		[NinjaScriptProperty]
+//		[Display(Name = "Enable VMA", Order = 3, GroupName = "08b. Default Settings")]
+//		public bool enableVMA { get; set; }
 	
-		[NinjaScriptProperty]
-		[Display(Name = "Show VMA", Order = 4, GroupName = "08b. Default Settings")]
-		public bool showVMA { get; set; }
+//		[NinjaScriptProperty]
+//		[Display(Name = "Show VMA", Order = 4, GroupName = "08b. Default Settings")]
+//		public bool showVMA { get; set; }
 	
-		[NinjaScriptProperty]
-		[Display(Name = "Enable Hooker", Order = 5, GroupName = "08b. Default Settings")]
-		public bool enableHmaHooks { get; set; }
+//		[NinjaScriptProperty]
+//		[Display(Name = "Enable Hooker", Order = 5, GroupName = "08b. Default Settings")]
+//		public bool enableHmaHooks { get; set; }
 	
-		[NinjaScriptProperty]
-		[Display(Name = "Show HMA Hooks", Order = 6, GroupName = "08b. Default Settings")]
-		public bool showHmaHooks { get; set; }
+//		[NinjaScriptProperty]
+//		[Display(Name = "Show HMA Hooks", Order = 6, GroupName = "08b. Default Settings")]
+//		public bool showHmaHooks { get; set; }
 	
-		[NinjaScriptProperty]
-		[Display(Name = "HMA Period", Order = 7, GroupName = "08b. Default Settings")]
-		public int HmaPeriod { get; set; }
+//		[NinjaScriptProperty]
+//		[Display(Name = "HMA Period", Order = 7, GroupName = "08b. Default Settings")]
+//		public int HmaPeriod { get; set; }
 	
 		[NinjaScriptProperty]
 		[Display(Name = "Enable KingKhanh", Order = 8, GroupName = "08b. Default Settings")]
@@ -4829,18 +4837,18 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         [Display(Name="Volatility Threshold", Order = 27, GroupName="08b. Default Settings")]
         public double atrThreshold { get; set; }		
 		
-		[NinjaScriptProperty]
-        [Display(Name = "Enable EMA Filter", Order = 28, GroupName = "08b. Default Settings")]
-        public bool enableEMAFilter { get; set; }
+//		[NinjaScriptProperty]
+//        [Display(Name = "Enable EMA Filter", Order = 28, GroupName = "08b. Default Settings")]
+//        public bool enableEMAFilter { get; set; }
 		
-		[NinjaScriptProperty]
-        [Display(Name = "Show EMA", Order = 29, GroupName = "08b. Default Settings")]
-        public bool showEMA { get; set; }
+//		[NinjaScriptProperty]
+//        [Display(Name = "Show EMA", Order = 29, GroupName = "08b. Default Settings")]
+//        public bool showEMA { get; set; }
 		
-		[NinjaScriptProperty]
-		[Display(Name="EMA Length", Order = 30, GroupName="08b. Default Settings")]
-		public int emaLength
-		{ get; set; }
+//		[NinjaScriptProperty]
+//		[Display(Name="EMA Length", Order = 30, GroupName="08b. Default Settings")]
+//		public int emaLength
+//		{ get; set; }
 		
 		[NinjaScriptProperty]
         [Display(Name = "Show Pivots", Order = 31, GroupName = "08b. Default Settings")]
