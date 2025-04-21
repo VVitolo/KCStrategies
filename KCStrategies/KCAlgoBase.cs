@@ -49,8 +49,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private BuySellPressure BuySellPressure1;
         private bool buyPressureUp;
         private bool sellPressureUp;
-		private Series<double> buyPressure;
-		private Series<double> sellPressure;		
+		private double buyPressure;
+		private double sellPressure;		
 
         private RegressionChannel RegressionChannel1, RegressionChannel2;
         private RegressionChannelHighLow RegressionChannelHighLow1;
@@ -65,7 +65,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private double pivotPoint, s1, s2, s3, r1, r2, r3, s1m, s2m, s3m, r1m, r2m, r3m;
 
 		private Momentum Momentum1;
-		private double momentum;		
+		private double currentMomentum;		
         private bool momoUp;
         private bool momoDown;
 		
@@ -74,6 +74,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private bool adxUp;
 
         private ATR ATR1;
+		private double currentAtr;
         private bool atrUp;
 
 		private ChoppinessIndex ChoppinessIndex1;
@@ -286,8 +287,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				Credits										= "";
 				StrategyName 								= "";
 				ChartType									= "Orenko 34-40-40";	
-				paypal 										= "https://www.paypal.com/signin"; 
-		
+				paypal 										= "https://www.paypal.com/signin"; 		
 
                 EntriesPerDirection = 10;					// This value should limit the number of contracts that the strategy can open per direction.
 															// It has nothing to do with the parameter defining the entries per direction that we define in the strategy and are controlled by code.
@@ -352,7 +352,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				showMomo						= false;
 				
 				adxPeriod						= 7;
-				adxThreshold					= 25;
+				AdxThreshold					= 25;
 				adxThreshold2					= 50;
 				adxExitThreshold				= 45;
 				enableADX						= true;
@@ -370,7 +370,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				
 				enableExit						= false;
 				
-				LimitOffset						= 8;
+				LimitOffset						= 4;
 				TickMove						= 4;								
 						
                 MinRegChanTargetDistanceTicks = 60; // Example: Require at least 40 ticks for target
@@ -388,9 +388,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				InitialStop						= 97;
 				
 				ProfitTarget					= 40;
-				ProfitTarget2					= 44;
-				ProfitTarget3					= 48;
-				ProfitTarget4					= 52;
+				ProfitTarget2					= 48;
+				ProfitTarget3					= 56;
+				ProfitTarget4					= 64;
 				
 				EnableProfitTarget2				= true;
 				EnableProfitTarget3				= true;
@@ -488,9 +488,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 RealtimeErrorHandling = RealtimeErrorHandling.StopCancelClose;
 				
 				clientWebSocket = new ClientWebSocket();
-				
-				buyPressure = new Series<double>(this);
-				sellPressure = new Series<double>(this);
             }
             else if (State == State.DataLoaded)
             {	
@@ -506,6 +503,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				if (showRegChan2) AddChartIndicator(RegressionChannel2);
 	
 				RegressionChannelHighLow1 = RegressionChannelHighLow(Close, RegChanPeriod, RegChanWidth);
+				RegressionChannelHighLow1.Plots[1].Width = 2;
+				RegressionChannelHighLow1.Plots[2].Width = 2;		
 				if (showRegChanHiLo) AddChartIndicator(RegressionChannelHighLow1);
 	
 				BuySellPressure1				= BuySellPressure(Close);
@@ -627,9 +626,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             r2m = pivots.R2M[0];
 			r3m = pivots.R3M[0];
 			
-			atrUp = enableVolatility ? ATR1[0] > atrThreshold : true;
+			currentAtr = ATR1[0];
+			atrUp = enableVolatility ? currentAtr > atrThreshold : true;
 			
-			adxUp = !enableADX || ADX1[0] > adxThreshold && ADX1[0] < adxThreshold2;
+			adxUp = !enableADX || ADX1[0] > AdxThreshold && ADX1[0] < adxThreshold2;
 			
 			regChanUp = RegressionChannel1.Middle[0] > RegressionChannel1.Middle[1];
 			regChanDown = RegressionChannel1.Middle[0] < RegressionChannel1.Middle[1];
@@ -637,8 +637,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			buyPressureUp = !enableBuySellPressure || (BuySellPressure1.BuyPressure[0] > BuySellPressure1.SellPressure[0]);
 			sellPressureUp = !enableBuySellPressure || (BuySellPressure1.SellPressure[0] > BuySellPressure1.BuyPressure[0]);
 			
-			buyPressure[0] = BuySellPressure1.BuyPressure[0];
-			sellPressure[0] = BuySellPressure1.SellPressure[0];
+			buyPressure = BuySellPressure1.BuyPressure[0];
+			sellPressure = BuySellPressure1.SellPressure[0];
 			
 			choppyUp = ChoppinessIndex1[0] > choppyThreshold;
 			choppyDown = ChoppinessIndex1[0] < choppyThreshold;
@@ -662,7 +662,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             // You could add a PrintOnce warning here if needed for debugging early bars.
             // ***** END MODIFIED SECTION for VMA *****
 
-			momentum = Momentum1[0];
+			currentMomentum = Momentum1[0];
 			momoUp = !enableMomo || (Momentum1[0] > MomoUp && Momentum1[0] > Momentum1[1]);
 			momoDown = !enableMomo || (Momentum1[0] < MomoDown && Momentum1[0] < Momentum1[1]);
 			
@@ -3710,7 +3710,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 //			base.OnRender(chartControl, chartScale);
 //			if (showDailyPnl) DrawStrategyPnL(chartControl);
 //		}
-
 		protected void DrawStrategyPnL()
 		{	
 			if (Account == null) return; // Added safety check for connection
@@ -3770,11 +3769,14 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		    int buySellPressureRequiredBars = BarsRequiredToTrade; // Or specific period if known for BuySellPressure
 		
 		    // Check CurrentBar against the required period (0-based index means CurrentBar >= Period - 1)
-		    string adxText = CurrentBar >= adxPeriod - 1 ? currentAdx.ToString("F1") : "N/A";
-		    string momoText = CurrentBar >= momentumPeriod - 1 ? momentum.ToString("F1") : "N/A";
+			
+            string adxStatus = currentAdx > AdxThreshold ? $"Trending ({currentAdx:F1})" : $"Choppy ({currentAdx:F1})";
+			string momoStatus = currentMomentum > 0 ? $"Up ({currentMomentum:F1})" : currentMomentum < 0 ? $"Down ({currentMomentum:F1})" : $"Neutral ({currentMomentum:F1})";
 		    // Assuming buyPressure/sellPressure series are populated when BuySellPressure1 is calculated in OnBarUpdate
-		    string buyPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? buyPressure[0].ToString("F1") : "N/A";
-		    string sellPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? sellPressure[0].ToString("F1") : "N/A";
+		    string buyPressText = buyPressure > sellPressure ? $"Up ({buyPressure:F1})" : $"Down ({buyPressure:F1})";
+		    string sellPressText = sellPressure > buyPressure ? $"Up ({sellPressure:F1})" : $"Down ({sellPressure:F1})";
+//		    string buyPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? buyPressure[0].ToString("Up (F1)") : "N/A";
+//		    string sellPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? sellPressure.ToString("F1") : "N/A";
 		    // --- END FIXED INDICATOR VALUE DISPLAY ---
 
 		
@@ -3787,10 +3789,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		        $"Daily PnL:\t{dailyPnL:C}\n" +
 		        $"Max Profit:\t{(maxProfit == double.MinValue ? "N/A" : maxProfit.ToString("C"))}\n" +
 		        $"-------------\n" +
-		        $"ADX:\t\t{adxText}\n" +             // Use safe text
-		        $"Momentum:\t{momoText}\n" +           // Use safe text
+		        $"ADX:\t\t{adxStatus}\n" +             // Use safe text
+		        $"Momentum:\t{momoStatus}\n" +           // Use safe text
 		        $"Buy Pressure:\t{buyPressText}\n" +   // Use safe text
 		        $"Sell Pressure:\t{sellPressText}\n" +  // Use safe text
+				$"ATR:\t\t{currentAtr:F2}\n" +
 		        $"-------------\n" +
 		        $"Trend:\t{trendStatus}\n" +      // Use overridden status
 		        $"Signal:\t{signalStatus}";       // Use overridden status
@@ -4702,7 +4705,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		[NinjaScriptProperty]
         [Range(1, int.MaxValue)]
         [Display(Name = "ADX Threshold 1", Order = 23, GroupName = "08b. Default Settings")]
-        public int adxThreshold { get; set; }
+        public int AdxThreshold { get; set; }
 		
 		[NinjaScriptProperty]
         [Range(1, int.MaxValue)]

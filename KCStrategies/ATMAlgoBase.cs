@@ -45,8 +45,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private bool hmaDown;
 
         private BuySellPressure BuySellPressure1;
-        private Series<double> buyPressure;
-        private Series<double> sellPressure;
+        private double buyPressure;
+        private double sellPressure;
         private bool buyPressureUp;
         private bool sellPressureUp;
 
@@ -71,6 +71,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private ATR ATR1;
 		private double currentAtr;
         private bool atrUp;
+
+		private ChoppinessIndex ChoppinessIndex1;
+		private int choppyThreshold = 50;
+		public bool choppyDown;
+        public bool choppyUp;		
 
         private bool marketIsChoppy;
         private bool autoDisabledByChop; // Tracks if Auto was turned off by the system due to chop
@@ -1181,18 +1186,18 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             counterLong = 0;
             counterShort = 0;
 
-            Start = DateTime.Parse("06:30", System.Globalization.CultureInfo.InvariantCulture);
-            End = DateTime.Parse("07:30", System.Globalization.CultureInfo.InvariantCulture);
-            Start2 = DateTime.Parse("07:31", System.Globalization.CultureInfo.InvariantCulture);
-            End2 = DateTime.Parse("08:00", System.Globalization.CultureInfo.InvariantCulture);
-            Start3 = DateTime.Parse("08:01", System.Globalization.CultureInfo.InvariantCulture);
-            End3 = DateTime.Parse("12:00", System.Globalization.CultureInfo.InvariantCulture);
-            Start4 = DateTime.Parse("12:01", System.Globalization.CultureInfo.InvariantCulture);
-            End4 = DateTime.Parse("13:00", System.Globalization.CultureInfo.InvariantCulture);
-            Start5 = DateTime.Parse("06:30", System.Globalization.CultureInfo.InvariantCulture);
-            End5 = DateTime.Parse("13:00", System.Globalization.CultureInfo.InvariantCulture);
-            Start6 = DateTime.Parse("00:00", System.Globalization.CultureInfo.InvariantCulture);
-            End6 = DateTime.Parse("23:59", System.Globalization.CultureInfo.InvariantCulture);
+            Start							= DateTime.Parse("06:35", System.Globalization.CultureInfo.InvariantCulture);
+			End								= DateTime.Parse("09:00", System.Globalization.CultureInfo.InvariantCulture);
+			Start2							= DateTime.Parse("09:01", System.Globalization.CultureInfo.InvariantCulture);
+			End2							= DateTime.Parse("11:00", System.Globalization.CultureInfo.InvariantCulture);
+			Start3							= DateTime.Parse("11:01", System.Globalization.CultureInfo.InvariantCulture);
+			End3							= DateTime.Parse("13:00", System.Globalization.CultureInfo.InvariantCulture);
+			Start4							= DateTime.Parse("15:00", System.Globalization.CultureInfo.InvariantCulture);
+			End4							= DateTime.Parse("23:59", System.Globalization.CultureInfo.InvariantCulture);
+			Start5							= DateTime.Parse("06:30", System.Globalization.CultureInfo.InvariantCulture);
+			End5							= DateTime.Parse("13:00", System.Globalization.CultureInfo.InvariantCulture);
+			Start6							= DateTime.Parse("00:00", System.Globalization.CultureInfo.InvariantCulture);
+			End6							= DateTime.Parse("23:59", System.Globalization.CultureInfo.InvariantCulture);
 
             // Panel Status
             showDailyPnl = true;
@@ -1216,8 +1221,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private void ConfigureStrategy()
         {
             RealtimeErrorHandling = RealtimeErrorHandling.StopCancelClose;
-            buyPressure = new Series<double>(this);
-            sellPressure = new Series<double>(this);
         }
 
 		private void ConfigureMultiTimeSeries()
@@ -1870,13 +1873,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             if (showRegChan2)
                 AddChartIndicator(RegressionChannel2);
 
-            RegressionChannelHighLow1 = RegressionChannelHighLow(
-                Close,
-                RegChanPeriod,
-                RegChanWidth
-            );
-            if (showRegChanHiLo)
-                AddChartIndicator(RegressionChannelHighLow1);
+			RegressionChannelHighLow1 = RegressionChannelHighLow(Close, RegChanPeriod, RegChanWidth);
+			RegressionChannelHighLow1.Plots[1].Width = 2;
+			RegressionChannelHighLow1.Plots[2].Width = 2;		
+			if (showRegChanHiLo) AddChartIndicator(RegressionChannelHighLow1);
 
             BuySellPressure1 = BuySellPressure(Close);
             BuySellPressure1.Plots[0].Width = 2;
@@ -1903,7 +1903,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             ADX1.Plots[0].Width = 2;
             if (showAdx)
                 AddChartIndicator(ADX1);
-
+	
+			ChoppinessIndex1 = ChoppinessIndex(Close, 14);
+			
             ATR1 = ATR(AtrPeriod);
 
             maxProfit = totalPnL;
@@ -1985,8 +1987,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 regChanUp = RegressionChannel1.Middle[0] > RegressionChannel1.Middle[1];
                 regChanDown = RegressionChannel1.Middle[0] < RegressionChannel1.Middle[1];
 
-                buyPressure[0] = BuySellPressure1.BuyPressure[0];
-                sellPressure[0] = BuySellPressure1.SellPressure[0];
+                buyPressure = BuySellPressure1.BuyPressure[0];
+                sellPressure = BuySellPressure1.SellPressure[0];
 
                 buyPressureUp =
                     !enableBuySellPressure
@@ -1995,6 +1997,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                     !enableBuySellPressure
                     || (BuySellPressure1.SellPressure[0] > BuySellPressure1.BuyPressure[0]);
 
+				choppyUp = ChoppinessIndex1[0] > choppyThreshold;
+				choppyDown = ChoppinessIndex1[0] < choppyThreshold;
+				
                 hmaUp = (hullMAHooks[0] > hullMAHooks[1]);
                 hmaDown = (hullMAHooks[0] < hullMAHooks[1]);
 
@@ -2047,7 +2052,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                         bool isRegChanFlat = Math.Abs(regChanSlope) < flatSlopeThreshold;
                         bool adxIsLow = currentAdx < ChopAdxThreshold; // Use existing ADX check
 
-                        marketIsChoppy = isRegChanFlat && adxIsLow;
+                        marketIsChoppy = isRegChanFlat && adxIsLow && choppyUp;
                     }
                     // --- End Regression Channel Slope Choppiness ---
 
@@ -2113,13 +2118,13 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
 				if (enableTrend)
 				{
-	                uptrend = momoUp && buyPressureUp && hmaUp && volMaUp && regChanUp && adxUp && atrUp;
-	                downtrend = momoDown && sellPressureUp && hmaDown && volMaDown && regChanDown && adxUp && atrUp;
+	                uptrend = choppyDown && momoUp && buyPressureUp && hmaUp && volMaUp && regChanUp && adxUp && atrUp;
+	                downtrend = choppyDown && momoDown && sellPressureUp && hmaDown && volMaDown && regChanDown && adxUp && atrUp;
 				}
 				else
 				{
-					uptrend = buyPressureUp && adxUp && atrUp;
-	                downtrend = sellPressureUp && adxUp && atrUp;
+					uptrend = choppyUp && buyPressureUp && adxUp && atrUp;
+	                downtrend = choppyUp && sellPressureUp && adxUp && atrUp;
 				}
 
                 priceUp = Close[0] > Close[1] && Close[0] > Open[0];
@@ -3433,8 +3438,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             string adxStatus = currentAdx > AdxThreshold ? $"Trending ({currentAdx:F1})" : $"Choppy ({currentAdx:F1})";
 			string momoStatus = currentMomentum > 0 ? $"Up ({currentMomentum:F1})" : currentMomentum < 0 ? $"Down ({currentMomentum:F1})" : $"Neutral ({currentMomentum:F1})";
 		    // Assuming buyPressure/sellPressure series are populated when BuySellPressure1 is calculated in OnBarUpdate
-		    string buyPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? buyPressure[0].ToString("F1") : "N/A";
-		    string sellPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? sellPressure[0].ToString("F1") : "N/A";
+		    string buyPressText = buyPressure > sellPressure ? $"Up ({buyPressure:F1})" : $"Down ({buyPressure:F1})";
+		    string sellPressText = sellPressure > buyPressure ? $"Up ({sellPressure:F1})" : $"Down ({sellPressure:F1})";
+//		    string buyPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? buyPressure[0].ToString("Up (F1)") : "N/A";
+//		    string sellPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? sellPressure.ToString("F1") : "N/A";
 		    // --- END FIXED INDICATOR VALUE DISPLAY ---
 		
 		    string realTimeTradeText =
