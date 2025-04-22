@@ -34,7 +34,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         #region Variables
 		
         private DateTime lastEntryTime;
-        private readonly TimeSpan tradeDelay = TimeSpan.FromSeconds(30);	
+        private readonly TimeSpan tradeDelay = TimeSpan.FromSeconds(10);
 		
         // Dictionary to track messages printed by PrintOnce (Key = message key, Value = bar number printed)
         private Dictionary<string, int> printedMessages = new Dictionary<string, int>();
@@ -49,8 +49,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private BuySellPressure BuySellPressure1;
         private bool buyPressureUp;
         private bool sellPressureUp;
-		private Series<double> buyPressure;
-		private Series<double> sellPressure;		
+		private double buyPressure;
+		private double sellPressure;		
 
         private RegressionChannel RegressionChannel1, RegressionChannel2;
         private RegressionChannelHighLow RegressionChannelHighLow1;
@@ -77,11 +77,16 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		private double currentAtr;
         private bool atrUp;
 
+		private ChoppinessIndex ChoppinessIndex1;
+		private int choppyThreshold = 50;
+		public bool choppyDown;
+        public bool choppyUp;		
+
 //        private bool aboveEMAHigh;
 //        private bool belowEMALow;
 
-        public bool uptrend;
-        public bool downtrend;
+        private bool uptrend;
+        private bool downtrend;
 
         private bool priceUp;
         private bool priceDown;
@@ -276,14 +281,13 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             {
 				Description									= @"Base Strategy with OEB v.5.0.2 TradeSaber(Dre). and ArchReactor for KC (Khanh Nguyen)";
 				Name										= "KCAlgoBase2";
-				BaseAlgoVersion								= "KCAlgoBase2 v.5.5";
+				BaseAlgoVersion								= "KCAlgoBase2 v.5.4";
 				Author										= "indiVGA, Khanh Nguyen, Oshi, based on ArchReactor";
-				Version										= "Version 5.5 Apr. 2025";
+				Version										= "Version 5.4 Apr. 2025";
 				Credits										= "";
 				StrategyName 								= "";
 				ChartType									= "Orenko 34-40-40";	
-				paypal 										= "https://www.paypal.com/signin"; 
-		
+				paypal 										= "https://www.paypal.com/signin"; 		
 
                 EntriesPerDirection = 10;					// This value should limit the number of contracts that the strategy can open per direction.
 															// It has nothing to do with the parameter defining the entries per direction that we define in the strategy and are controlled by code.
@@ -300,7 +304,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 TraceOrders 								= false;
                 RealtimeErrorHandling 						= RealtimeErrorHandling.StopCancelCloseIgnoreRejects;
                 StopTargetHandling 							= StopTargetHandling.PerEntryExecution;
-                BarsRequiredToTrade 						= 120;
+                BarsRequiredToTrade 						= 20;
 				RealtimeErrorHandling 						= RealtimeErrorHandling.StopCancelClose; // important to manage errors on rogue orders
                 IsInstantiatedOnEachOptimizationIteration 	= false;
 				
@@ -314,9 +318,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				OrderType						= OrderType.Limit;
 				
 		        // Choppiness Defaults
-		        SlopeLookBack            		= 4;
+		        SlopeLookback            		= 4;
 		        FlatSlopeFactor       			= 0.125; 
-		        ChopAdxThreshold        		= 25;
+		        ChopAdxThreshold        		= 20;
 				EnableChoppinessDetection 		= true;
 		        marketIsChoppy          		= false;
 		        autoDisabledByChop      		= false;
@@ -326,32 +330,32 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				enableBuySellPressure 			= true;
 				showBuySellPressure 			= false;
 				
-//				HmaPeriod 						= 16;
-//				enableHmaHooks 					= false;
-//				showHmaHooks 					= false;
+//				HmaPeriod 						= 14;
+//				enableHmaHooks 					= true;
+//				showHmaHooks 					= true;
 	
-				RegChanPeriod 					= 20;
-				RegChanWidth 					= 5;
-				RegChanWidth2 					= 4;
+				RegChanPeriod 					= 40;
+				RegChanWidth 					= 4;
+				RegChanWidth2 					= 3;
 				enableRegChan1 					= true;
 				enableRegChan2 					= true;
 				showRegChan1 					= true;
 				showRegChan2 					= true;
 				showRegChanHiLo 				= true;
 
-//				enableVMA						= false;
-//				showVMA							= false;
+//				enableVMA						= true;
+//				showVMA							= true;
 				
 				MomoUp							= 1;
 				MomoDown						= -1;
-				enableMomo						= false;
+				enableMomo						= true;
 				showMomo						= false;
 				
 				adxPeriod						= 7;
 				AdxThreshold					= 25;
 				adxThreshold2					= 50;
 				adxExitThreshold				= 45;
-				enableADX						= false;
+				enableADX						= true;
 				showAdx							= false;
 				
 //				emaLength						= 110;
@@ -360,11 +364,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				
 				AtrPeriod						= 14;
 				atrThreshold					= 1.5;
-				enableVolatility				= false;
+				enableVolatility				= true;
 				
 				showPivots						= false;
 				
-				enableExit						= true;
+				enableExit						= false;
 				
 				LimitOffset						= 4;
 				TickMove						= 4;								
@@ -383,10 +387,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				
 				InitialStop						= 97;
 				
-				ProfitTarget					= 60;
-				ProfitTarget2					= 100;
-				ProfitTarget3					= 140;
-				ProfitTarget4					= 180;
+				ProfitTarget					= 40;
+				ProfitTarget2					= 48;
+				ProfitTarget3					= 56;
+				ProfitTarget4					= 64;
 				
 				EnableProfitTarget2				= true;
 				EnableProfitTarget3				= true;
@@ -396,8 +400,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				BESetAuto						= true;
 				beSetAuto						= true;
 				showctrlBESetAuto				= true;
-				BE_Trigger						= 40;
-				BE_Offset						= 0;
+				BE_Trigger						= 32;
+				BE_Offset						= 4;
 				_beRealized						= false;
 
 			//	Trailing Stops
@@ -420,10 +424,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				threeStepTrail					= false;
 				step1ProfitTrigger 				= 1;	// Set your step 1 profit trigger
                 step1StopLoss 					= 97;	// Set your step 1 stop loss
-                step2ProfitTrigger 				= 40;	// Set your step 2 profit trigger
+                step2ProfitTrigger 				= 44;	// Set your step 2 profit trigger
                 step2StopLoss 					= 40;	// Set your step 2 stop loss
-				step3ProfitTrigger 				= 100;	// Set your step 3 profit trigger
-				step3StopLoss 					= 30;	// Set your step 3 stop loss
+				step3ProfitTrigger 				= 52;	// Set your step 3 profit trigger
+				step3StopLoss 					= 16;	// Set your step 3 stop loss
 //				step1Frequency					= 4;
 //				step2Frequency					= 4;
 //				step3Frequency					= 2;
@@ -458,6 +462,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				showDailyPnl					= true;
 				PositionDailyPNL				= TextPosition.BottomLeft;	
 				colorDailyProfitLoss			= Brushes.Cyan; // Default value
+				FontSize						= 16;
 				
 				showPnl							= false;
 				PositionPnl						= TextPosition.TopLeft;
@@ -467,10 +472,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				dailyLossProfit					= true;
 				DailyProfitLimit				= 100000;
 				DailyLossLimit					= 2000;				
-				TrailingDrawdown				= 1000;
-				StartTrailingDD					= 3000;
+				TrailingDrawdown				= 2000;
+				StartTrailingDD					= 0;
 				maxProfit 						= double.MinValue;	// double.MinValue guarantees that any totalPnL will trigger it to set the variable
-				enableTrailingDrawdown 				= true;
+				enableTrailingDrawdown 			= true;
 				
 				ShowHistorical					= true;
 				
@@ -484,12 +489,17 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 RealtimeErrorHandling = RealtimeErrorHandling.StopCancelClose;
 				
 				clientWebSocket = new ClientWebSocket();
-				
-				buyPressure = new Series<double>(this);
-				sellPressure = new Series<double>(this);
             }
             else if (State == State.DataLoaded)
             {	
+			    // Initialize maxProfit robustly
+			    maxProfit = double.MinValue; // Initialize to lowest possible value
+			
+			    // Initialize PnL variables (assuming strategy starts flat)
+			    totalPnL = 0; // Tracks realized PnL primarily via OnPositionUpdate
+			    cumPnL = 0;   // Tracks realized PnL at session start
+			    dailyPnL = 0;
+
 //				hullMAHooks = BlueZHMAHooks(Close, HmaPeriod, 0, false, false, true, Brushes.Lime, Brushes.Red);
 //				hullMAHooks.Plots[0].Brush = Brushes.White;
 //				hullMAHooks.Plots[0].Width = 2;
@@ -502,12 +512,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				if (showRegChan2) AddChartIndicator(RegressionChannel2);
 	
 				RegressionChannelHighLow1 = RegressionChannelHighLow(Close, RegChanPeriod, RegChanWidth);
-				
 				RegressionChannelHighLow1.Plots[1].Width = 2;
-	            RegressionChannelHighLow1.Plots[1].Brush = Brushes.Yellow;
-				RegressionChannelHighLow1.Plots[2].Width = 2;
-	            RegressionChannelHighLow1.Plots[2].Brush = Brushes.Yellow;
-			
+				RegressionChannelHighLow1.Plots[2].Width = 2;		
 				if (showRegChanHiLo) AddChartIndicator(RegressionChannelHighLow1);
 	
 				BuySellPressure1				= BuySellPressure(Close);
@@ -534,6 +540,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				ADX1.Plots[0].Width = 2;
 				if (showAdx) AddChartIndicator(ADX1);
 				
+				ChoppinessIndex1 = ChoppinessIndex(Close, 14);
+			
 				pivots = NTSvePivots(Close, false, NTSvePivotRange.Daily, NTSveHLCCalculationMode.CalcFromIntradayData, 0, 0, 0, 250);
 				pivots.Plots[0].Width = 4;
 				if (showPivots) AddChartIndicator(pivots);
@@ -548,10 +556,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			    {
 			        string quickProfitTargetLabel = isLong ? QLE : QSE;  // QLE = Quick Long Entry, QSE = Quick Short Entry
 			        SetProfitTarget(quickProfitTargetLabel, CalculationMode.Ticks, ProfitTarget);
-			    } 				
-				
-				// Initialize maxProfit with the totalPnL (if it's the first time, it's 0)
-				maxProfit = totalPnL;  // Ensure maxProfit starts at the current PnL
+			    }
             }
 			else if (State == State.Historical)
 			{
@@ -582,349 +587,305 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				}				
 			}
         }
-		#endregion	
+		#endregion
 		
         #region OnBarUpdate
-		protected override void OnBarUpdate()
+        protected override void OnBarUpdate()
         {
-			if(Time[0] - lastEntryTime < tradeDelay) return;
+            // Prevent trading for a short duration after an entry to avoid rapid re-entries
+            if (Time[0] - lastEntryTime < tradeDelay) return;
 
-			canTradeOK = true; // Reset canTradeOK at the beginning of each bar.
-			// Ensure enough bars have passed overall for the *longest period* required by indicators in this block.
-			
-            if (BarsInProgress != 0 || CurrentBars[0] < BarsRequiredToTrade || orderErrorOccurred)
-				return;
-			
-			//Track the Highest Profit Achieved
-			if (totalPnL > maxProfit)
-			{
-				maxProfit = totalPnL;
-			}
-			
-			// *** Account Reconciliation ***
-			if (DateTime.Now - lastAccountReconciliationTime > accountReconciliationInterval)
-			{
-				ReconcileAccountOrders();
-				lastAccountReconciliationTime = DateTime.Now;
-			}
+            // Reset trade permission flag for the current bar
+            canTradeOK = true;
 
-			if (!ShowHistorical && State != State.Realtime) return;				
-			
-			trailStop = InitialStop;
-			
-			// Get pivot points and support/resistance levels
-            pivotPoint = pivots.Pp[0];
-            s1 = pivots.S1[0];
-            s2 = pivots.S2[0];
-            s3 = pivots.S3[0];
-            r1 = pivots.R1[0];
-            r2 = pivots.R2[0];
-            r3 = pivots.R3[0];
-            s1m = pivots.S1M[0];
-            s2m = pivots.S2M[0];
-			s3m = pivots.S3M[0];
-            r1m = pivots.R1M[0];
-            r2m = pivots.R2M[0];
-			r3m = pivots.R3M[0];
-			
-			currentAtr = ATR1[0];
-			atrUp = !enableVolatility || currentAtr > atrThreshold;
-			
-			currentAdx = ADX1[0];
-			adxUp = !enableADX || currentAdx > AdxThreshold;
-			
-			currentMomentum = Momentum1[0];
-			momoUp = !enableMomo || (currentMomentum > 0);
-			momoDown = !enableMomo || (currentMomentum < 0);
-			
-			regChanUp = RegressionChannel1.Middle[0] > RegressionChannel1.Middle[1];
-			regChanDown = RegressionChannel1.Middle[0] < RegressionChannel1.Middle[1];
+            // Basic sanity checks and error handling
+            if (BarsInProgress != 0 || CurrentBars[0] < BarsRequiredToTrade || orderErrorOccurred) // Ensure enough bars and no prior errors
+                return;
 
-			buyPressureUp = !enableBuySellPressure || (BuySellPressure1.BuyPressure[0] > BuySellPressure1.SellPressure[0]);
-			sellPressureUp = !enableBuySellPressure || (BuySellPressure1.SellPressure[0] > BuySellPressure1.BuyPressure[0]);
-			
-			buyPressure[0] = BuySellPressure1.BuyPressure[0];
-			sellPressure[0] = BuySellPressure1.SellPressure[0];
-			
-//			hmaUp = (hullMAHooks[0] > hullMAHooks[1]);
-//			hmaDown = (hullMAHooks[0] < hullMAHooks[1]);
-			
-            // ***** START MODIFIED SECTION for VMA *****
-            // Default values in case VMA isn't ready
-//            volMaUp = false;
-//            volMaDown = false;
+            // --- Account Reconciliation (Periodic Check for Rogue Orders) ---
+            if (State == State.Realtime && DateTime.Now - lastAccountReconciliationTime > accountReconciliationInterval)
+            {
+                ReconcileAccountOrders();
+                lastAccountReconciliationTime = DateTime.Now;
+            }
 
-//            // Check if VMA1 is initialized and has calculated enough data for index 1
-//            if (VMA1 != null && VMA1.IsValidDataPoint(1)) // IsValidDataPoint checks index validity
+            // Skip historical processing if ShowHistorical is false (except in Realtime)
+            if (!ShowHistorical && State != State.Realtime) return;
+
+            // --- Initialize/Reset Variables ---
+            // trailStop = InitialStop; // Removed: Stop logic now handles initial setting/trailing dynamically
+
+            // --- Session Start Initialization ---
+            if (Bars.IsFirstBarOfSession)
+            {
+                // cumPnL stores the REALIZED PnL at the start of the session.
+                cumPnL = SystemPerformance.RealTimeTrades.TradesPerformance.Currency.CumProfit;
+                dailyPnL = 0; // Daily PnL will be recalculated based on current total PnL vs cumPnL
+
+                // For typical Trailing Drawdown, maxProfit and the flag should NOT reset daily.
+                // maxProfit = double.MinValue; // Uncomment ONLY for daily drawdown reset
+                // trailingDrawdownReached = false; // Uncomment ONLY for daily drawdown reset
+
+                // Corrected Log Message: Use Time[0].Date
+                Print($"Start of Session {Time[0].Date.ToShortDateString()}: StartRealizedPnL = {cumPnL:C}. MaxProfit persists ({(maxProfit == double.MinValue ? "N/A" : maxProfit.ToString("C"))}). TrailingDD Flag: {trailingDrawdownReached}");
+            }
+
+            // --- Indicator Calculations ---
+            // Recalculate indicator values on each bar update. Ensure CurrentBar >= Period - 1 for safety.
+
+            // Pivots (check if pivots object is valid)
+            if (pivots != null && pivots.Pp.IsValidDataPoint(0)) // Check if pivot data is ready
+            {
+                pivotPoint = pivots.Pp[0];
+                s1 = pivots.S1[0]; s2 = pivots.S2[0]; s3 = pivots.S3[0];
+                r1 = pivots.R1[0]; r2 = pivots.R2[0]; r3 = pivots.R3[0];
+                s1m = pivots.S1M[0]; s2m = pivots.S2M[0]; s3m = pivots.S3M[0];
+                r1m = pivots.R1M[0]; r2m = pivots.R2M[0]; r3m = pivots.R3M[0];
+            } else {
+                // Handle case where pivots aren't ready (e.g., return or use default values)
+                // PrintOnce($"PivotNotReady_{CurrentBar}", $"{Time[0]}: Pivot data not yet available.");
+                // Might need to return here if pivots are critical for subsequent logic
+            }
+
+            // ATR
+            if (ATR1 != null && ATR1.IsValidDataPoint(0)) currentAtr = ATR1[0]; else currentAtr = 0; // Default if not ready
+            atrUp = enableVolatility ? currentAtr > atrThreshold : true;
+
+            // ADX
+             if (ADX1 != null && ADX1.IsValidDataPoint(0)) currentAdx = ADX1[0]; else currentAdx = 0; // Default if not ready
+            adxUp = !enableADX || (currentAdx > AdxThreshold && currentAdx < adxThreshold2);
+
+            // Regression Channel
+            if (RegressionChannel1 != null && RegressionChannel1.Middle.IsValidDataPoint(1)) // Need index 1 for comparison
+            {
+                regChanUp = RegressionChannel1.Middle[0] > RegressionChannel1.Middle[1];
+                regChanDown = RegressionChannel1.Middle[0] < RegressionChannel1.Middle[1];
+            } else {
+                regChanUp = false; regChanDown = false; // Default if not ready
+            }
+
+            // Buy/Sell Pressure
+            if (BuySellPressure1 != null && BuySellPressure1.BuyPressure.IsValidDataPoint(0) && BuySellPressure1.SellPressure.IsValidDataPoint(0))
+            {
+                buyPressure = BuySellPressure1.BuyPressure[0];
+                sellPressure = BuySellPressure1.SellPressure[0];
+                buyPressureUp = !enableBuySellPressure || (buyPressure > sellPressure);
+                sellPressureUp = !enableBuySellPressure || (sellPressure > buyPressure);
+            } else {
+                 buyPressure = 0; sellPressure = 0; // Default if not ready
+                 buyPressureUp = !enableBuySellPressure; sellPressureUp = !enableBuySellPressure;
+            }
+
+             // Choppiness Index
+             if (ChoppinessIndex1 != null && ChoppinessIndex1.IsValidDataPoint(0))
+             {
+                 choppyUp = ChoppinessIndex1[0] > choppyThreshold;
+                 choppyDown = ChoppinessIndex1[0] < choppyThreshold;
+             } else {
+                 choppyUp = false; choppyDown = true; // Default behavior might need review if index not ready
+             }
+
+            // HMA Hooks
+//            if (hullMAHooks != null && hullMAHooks.IsValidDataPoint(1)) // Need index 1 for comparison
 //            {
-//                // Safe to access VMA1[0] and VMA1[1]
+//                hmaUp = (hullMAHooks[0] > hullMAHooks[1]);
+//                hmaDown = (hullMAHooks[0] < hullMAHooks[1]);
+//            } else {
+//                 hmaUp = false; hmaDown = false; // Default if not ready
+//            }
+
+            // VMA
+//            if (VMA1 != null && VMA1.IsValidDataPoint(1))
+//            {
 //                volMaUp = !enableVMA || VMA1[0] > VMA1[1];
 //                volMaDown = !enableVMA || VMA1[0] < VMA1[1];
+//            } else {
+//                volMaUp = !enableVMA; volMaDown = !enableVMA; // Default if not ready
 //            }
-            // else: Keep the default false values calculated above if VMA isn't ready.
-            // You could add a PrintOnce warning here if needed for debugging early bars.
-            // ***** END MODIFIED SECTION for VMA *****
 
-//			aboveEMAHigh = !enableEMAFilter || Open[1] > EMA(High, emaLength)[1];
-//			belowEMALow = !enableEMAFilter || Open[1] < EMA(Low, emaLength)[1];
-			
-			if (EnableChoppinessDetection)
-			{
-				// --- Regression Channel Slope Choppiness ---
-				marketIsChoppy = false; // Default
-				
-				// Check if enough bars exist for slope calculation AND for ADX
-				if (CurrentBar >= Math.Max(RegChanPeriod, Math.Max(adxPeriod, SlopeLookBack)) -1 )
-				{
-				    double middleNow = RegressionChannel1.Middle[0];
-				    double middleBefore = RegressionChannel1.Middle[SlopeLookBack];
-				
-				    // Calculate slope (change in price per bar)
-				    double regChanSlope = (middleNow - middleBefore) / SlopeLookBack;
-				
-				    // Define a threshold for "flat" slope (needs tuning - VERY instrument dependent)
-				    // Might be a fraction of TickSize, e.g., 0.1 * TickSize
-				    double flatSlopeThreshold = FlatSlopeFactor * TickSize; // EXAMPLE - TUNE THIS CAREFULLY!
-				
-				    bool isRegChanFlat = Math.Abs(regChanSlope) < flatSlopeThreshold;
-				    bool adxIsLow = currentAdx < ChopAdxThreshold; // Use existing ADX check
-				
-				    marketIsChoppy = isRegChanFlat && adxIsLow;
-				}
-				// --- End Regression Channel Slope Choppiness ---
+            // Momentum
+             if (Momentum1 != null && Momentum1.IsValidDataPoint(1)) // Need index 1 for comparison
+             {
+                 currentMomentum = Momentum1[0];
+                 momoUp = !enableMomo || (currentMomentum > MomoUp && currentMomentum > Momentum1[1]);
+                 momoDown = !enableMomo || (currentMomentum < MomoDown && currentMomentum < Momentum1[1]);
+             } else {
+                  currentMomentum = 0; // Default if not ready
+                  momoUp = !enableMomo; momoDown = !enableMomo;
+             }
 
-			    // --- Manage Auto Trading Based on Choppiness ---
-			    bool autoStatusChanged = false; // Flag to see if we changed status this bar				
-				
-				// Inside OnBarUpdate, after marketIsChoppy is calculated:
-				if (marketIsChoppy) // Or your specific condition
-				{
-					TransparentColor(Opacity, Colors.LightGray);					
-				}
-				else
-				{
-				    // Reset the background when the condition is false
-				    BackBrush = null; // Or Brushes.Transparent, or your default chart background if known
-				}
-					
-			    if (marketIsChoppy)
-			    {
-			        if (isAutoEnabled) // Only act if it was enabled
-			        {
-			            isAutoEnabled = false;
-			            autoDisabledByChop = true; // Mark that the *system* disabled it
-			            autoStatusChanged = true;
-			            Print($"{Time[0]}: Market choppy (ADX={currentAdx:F1} < {ChopAdxThreshold}, BBWidth Factor < {FlatSlopeFactor:P0}). Auto trading DISABLED.");
-			        }
-			    }
-			    else // Market is NOT choppy
-			    {
-			        if (autoDisabledByChop) // Only re-enable if *system* disabled it
-			        {
-			            isAutoEnabled = true;
-			            autoDisabledByChop = false; // Clear the flag
-			            autoStatusChanged = true;
-			            Print($"{Time[0]}: Market no longer choppy. Auto trading RE-ENABLED.");
-			        }
-			        // If autoDisabledByChop is false, it means the user turned it off manually, so we leave it off.
-			    }
+            // EMA Filter (ensure EMA has enough data)
+//            if (CurrentBar >= emaLength - 1)
+//            {
+//                 aboveEMAHigh = !enableEMAFilter || Open[1] > EMA(High, emaLength)[1];
+//                 belowEMALow = !enableEMAFilter || Open[1] < EMA(Low, emaLength)[1];
+//            } else {
+//                 aboveEMAHigh = !enableEMAFilter; belowEMALow = !enableEMAFilter; // Default if not ready
+//            }
 
-			    // --- Update Auto Button Visual ---
-			    // Use Dispatcher for safety, although often works without in strategies
-			    if (autoStatusChanged && autoBtn != null && ChartControl != null) // Check if button and chart control exist
-			    {
-			         ChartControl.Dispatcher.InvokeAsync(() => { // Ensures UI update happens on UI thread
-			            DecorateButton(autoBtn, isAutoEnabled ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Auto On", "\uD83D\uDD13 Auto Off");
-			            // Also update manual button state inversely
-			            DecorateButton(manualBtn, !isAutoEnabled ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Manual On", "\uD83D\uDD13 Manual Off");
-			         });
-			    }
-			}
-			
-			uptrend = buyPressureUp && adxUp && atrUp;
-            downtrend = sellPressureUp && adxUp && atrUp;
-			
-//			uptrend = adxUp && momoUp && buyPressureUp && hmaUp && volMaUp && regChanUp && atrUp && aboveEMAHigh;
-//            downtrend = adxUp && momoDown && sellPressureUp && hmaDown && volMaDown && regChanDown && atrUp && belowEMALow;
-			
-			if (RegressionChannel1.Middle[0] > RegressionChannel1.Middle[20])
-			{
-				PositionDailyPNL = TextPosition.TopLeft;
-				PositionPnl	= TextPosition.BottomLeft;
-			} 
-			else
-			{
-				PositionDailyPNL = TextPosition.BottomLeft;
-				PositionPnl	= TextPosition.TopLeft;
-			}
-				
-			priceUp =  Close[0] > Close[1] && Close[0] > Open[0];		
-			priceDown =  Close[0] < Close[1] && Close[0] < Open[0];
-			
-			UpdatePositionState();
-			
-			if (isAutoEnabled)
-			{
-				ProcessLongEntry();
-				ProcessShortEntry();
-			}
-			
-			if (enableBackgroundSignal)
-			{
-				if (uptrend)
-				{				  
-					TransparentColor(Opacity, Colors.Lime);
-				}
-				else if (downtrend)
-				{			
-					TransparentColor(Opacity, Colors.Crimson);
-				}
-				else
-				{
-				    // Reset the background when the condition is false
-				    BackBrush = null; // Or Brushes.Transparent, or your default chart background if known
-				}
-			}	
-				
-		    // --- Stop/Target Management ---
-		    ManageAutoBreakeven();
-		    ManageStopLoss();
-		    SetProfitTargets(); // Keep setting targets even if auto entry is off
+            // Price Action
+            priceUp = Close[0] > Close[1] && Close[0] > Open[0];
+            priceDown = Close[0] < Close[1] && Close[0] < Open[0];
 
-			// Calculate Profit Target based on ATR
-		    if (enableAtrProfitTarget) ProfitTarget = ATR1[0] * RiskRewardRatio / TickSize;
-			
-			if (EnableDynamicProfitTarget)
-			{
-				// Set profit target at each pivot level
-				if (isLong && Close[0] > r3 && Low[0] <= r3)
-					SetProfitTarget(@LE, CalculationMode.Ticks, ProfitTarget);
-				else
-					SetProfitTargetBasedOnLongConditions();
-				
-				if (isShort && Close[0] < s3 && High[0] >= s3)
-					SetProfitTarget(@SE, CalculationMode.Ticks, ProfitTarget);
-				else 
-					SetProfitTargetBasedOnShortConditions();
-			}
-			
-		    // --- PnL / Status Display ---
-		    if (Bars.IsFirstBarOfSession)
-			{
-				cumPnL 			= totalPnL; ///Double that copies the full session PnL (If trading multiple days). Is only calculated once per day.
-				dailyPnL		= totalPnL - cumPnL; ///Subtract the copy of the full session by the full session PnL. This resets your daily PnL back to 0.
-			}
-			
-		    if (showPnl) ShowPNLStatus();
-
-			if (showDailyPnl) DrawStrategyPnL();
-				
-//			if (IsFirstTickOfBar) checkPositions();    // Detect unwanted Positions opened (possible rogue Order?
-			
-			#region Reset Trades Per Direction
-            if (TradesPerDirection){
-                if (counterLong != 0 && Close[1] < Open[1])
-                    counterLong = 0;
-                if (counterShort != 0 && Close[1] > Open[1])
-                    counterShort = 0;
-            }
-            #endregion	
-			
-			#region Reset Stop Loss
-			
-			// Reset when Flat
-			if (isFlat)
-			{
-				// ***** NEW: Explicitly cancel working stops *****
-                lock(orderLock) // Use existing lock for safety
+            // --- Choppiness Detection & Auto Trading Management ---
+            if (EnableChoppinessDetection)
+            {
+                marketIsChoppy = false; // Default
+                // Ensure enough bars for RegChan, ADX, and SlopeLookback
+                int maxLookback = Math.Max(RegChanPeriod, Math.Max(adxPeriod, SlopeLookback));
+                if (CurrentBar >= maxLookback - 1 && RegressionChannel1 != null && RegressionChannel1.Middle.IsValidDataPoint(SlopeLookback))
                 {
-                    // Find all working stop market orders associated with ANY entry signal managed by this strategy
-                    // You might need to refine the filter if you have stops from other sources/logics
-                    List<Order> stopsToCancel = Orders.Where(o =>
-                        o.OrderState == OrderState.Working &&
-                        o.IsStopMarket &&
-                        (o.FromEntrySignal == LE || o.FromEntrySignal == SE || o.FromEntrySignal == QLE || o.FromEntrySignal == QSE ||
-                         o.FromEntrySignal == LE2 || o.FromEntrySignal == SE2 || o.FromEntrySignal == "QLE2" || o.FromEntrySignal == "QSE2" ||
-                         o.FromEntrySignal == LE3 || o.FromEntrySignal == SE3 || o.FromEntrySignal == "QLE3" || o.FromEntrySignal == "QSE3" ||
-                         o.FromEntrySignal == LE4 || o.FromEntrySignal == SE4 || o.FromEntrySignal == "QLE4" || o.FromEntrySignal == "QSE4" ||
-                         o.FromEntrySignal == Add1LE || o.FromEntrySignal == Add1SE // Add any other relevant labels
-                        )).ToList();
+                    double middleNow = RegressionChannel1.Middle[0];
+                    double middleBefore = RegressionChannel1.Middle[SlopeLookback];
+                    double regChanSlope = (SlopeLookback > 0) ? (middleNow - middleBefore) / SlopeLookback : 0;
+                    double flatSlopeThreshold = FlatSlopeFactor * TickSize;
+                    bool isRegChanFlat = Math.Abs(regChanSlope) < flatSlopeThreshold;
+                    bool adxIsLow = currentAdx < ChopAdxThreshold; // Use currentAdx calculated earlier
 
-                    if (stopsToCancel.Count > 0)
+                    marketIsChoppy = isRegChanFlat && adxIsLow && choppyUp; // Combine conditions
+                }
+
+                // Manage Auto Trading Based on Choppiness
+                bool autoStatusChanged = false;
+                if (marketIsChoppy)
+                {
+                    if (enableBackgroundSignal) TransparentColor(Opacity, Colors.LightGray); // Set background color
+
+                    if (isAutoEnabled) // Only act if Auto was ON
                     {
-                        PrintOnce($"Flat_CancelStops_{CurrentBar}", $"{Time[0]}: Position is flat. Cancelling {stopsToCancel.Count} working stop order(s).");
-                        foreach (Order stopOrder in stopsToCancel)
-                        {
-                            try
-                            {
-                                 CancelOrder(stopOrder);
-                                 // Optional: Remove from activeOrders if you were tracking stops there, unlikely here
-                                 // if (activeOrders.ContainsValue(stopOrder)) { /* remove */ }
-                            }
-                            catch(Exception ex)
-                            {
-                                PrintOnce($"Flat_CancelStopError_{stopOrder.OrderId}_{CurrentBar}", $"{Time[0]}: Error cancelling stop order {stopOrder.OrderId} on flatten: {ex.Message}");
-                                // Potentially set orderErrorOccurred = true; if stop cancel failure is critical
-                            }
-                        }
+                        isAutoEnabled = false;
+                        autoDisabledByChop = true; // System disabled it
+                        autoStatusChanged = true;
+                        PrintOnce($"ChopDisable_{CurrentBar}", $"{Time[0]}: Market choppy. Auto trading DISABLED by system.");
                     }
                 }
-				
-				// Reset quick order buttons
-			    quickLongBtnActive = false;
-			    quickShortBtnActive = false;
-			
-			    // Reset counters and progress state
-			    ProgressState = 0;
-				trailStop = InitialStop;
-		        lastStopLevel = InitialStop;
-			    _beRealized = false;
-				
-				// Clear active orders on flatten. CRITICAL for ghost order prevention.
-				lock (orderLock)
-				{
-					activeOrders.Clear();
-				}
-			}
-			
-			if (!canTradeOK)
-			{
-                if (Time[0] >= lastEntryTime.AddSeconds(SecsSinceEntry))
+                else // Market is NOT choppy
                 {
-					Print(Time[0] + " Timer de-activated");
-                    canTradeOK = true;
-                }				
-			}	
-			
-			#endregion
-			
-			if (ValidateExitLong()) 
-			{
-				// Create the order labels array based on whether additional contracts exist
-				string[] orderLabels = additionalContractExists ? new[] { LE2, LE3, LE4, QLE, "QLE2", "QLE3", "QLE4" } : new[] { LE };
-				
-				// Apply the initial stop for all relevant orders
-				foreach (string label in orderLabels)
-				{		              
-					ExitLong(label);
-				}
-			}
-			
-			if (ValidateExitShort())
-			{
-				// Create the order labels array based on whether additional contracts exist
-				string[] orderLabels = additionalContractExists ? new[] { SE2, SE3, SE4, QSE, "QSE2", "QSE3", "QSE4" } : new[] { SE };
-				
-				// Apply the initial stop for all relevant orders
-				foreach (string label in orderLabels)
-				{		              
-					ExitShort(label);
-				}	
-			}
-			
-			KillSwitch();
+                    if (enableBackgroundSignal) BackBrush = null; // Reset background color if not choppy
+
+                    if (autoDisabledByChop) // Only re-enable if *system* disabled it
+                    {
+                        isAutoEnabled = true;
+                        autoDisabledByChop = false; // Clear the flag
+                        autoStatusChanged = true;
+                         PrintOnce($"ChopEnable_{CurrentBar}", $"{Time[0]}: Market no longer choppy. Auto trading RE-ENABLED by system.");
+                    }
+                    // If user turned it off (autoDisabledByChop is false), leave it off.
+                }
+
+                // Update Auto/Manual Button Visuals if status changed
+                if (autoStatusChanged && autoBtn != null && manualBtn != null && ChartControl != null)
+                {
+                     ChartControl.Dispatcher.InvokeAsync(() => {
+                        DecorateButton(autoBtn, isAutoEnabled ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Auto On", "\uD83D\uDD13 Auto Off");
+                        DecorateButton(manualBtn, !isAutoEnabled ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Manual On", "\uD83D\uDD13 Manual Off");
+                     });
+                }
+            } else {
+                 // Ensure marketIsChoppy is false if detection is disabled
+                 marketIsChoppy = false;
+                 // Reset background if detection is off and background signal was on
+                 if (enableBackgroundSignal) BackBrush = null;
+            }
+
+
+            // --- Define Trend Conditions ---
+            // Combine flags calculated above. Ensure flags default reasonably if indicators aren't ready.
+            uptrend = adxUp && momoUp && buyPressureUp && atrUp;
+            downtrend = adxUp && momoDown && sellPressureUp && atrUp;
+
+            // --- Update PnL Display Position Based on Trend ---
+            // (Consider if this is really needed or if fixed positions are better)
+            if (RegressionChannel1 != null && RegressionChannel1.Middle.IsValidDataPoint(20)) // Check readiness
+            {
+                if (RegressionChannel1.Middle[0] > RegressionChannel1.Middle[20])
+                {
+                    PositionDailyPNL = TextPosition.TopLeft;
+                    PositionPnl = TextPosition.BottomLeft;
+                }
+                else
+                {
+                    PositionDailyPNL = TextPosition.BottomLeft;
+                    PositionPnl = TextPosition.TopLeft;
+                }
+            }
+
+             // --- Update Strategy Position State ---
+             UpdatePositionState();
+
+             // --- Process Auto Entries (if enabled) ---
+             if (isAutoEnabled)
+             {
+                 ProcessLongEntry();
+                 ProcessShortEntry();
+             }
+
+             // --- Set Background Color Based on Trend (if not choppy) ---
+             if (enableBackgroundSignal && !marketIsChoppy)
+             {
+                 if (uptrend) TransparentColor(Opacity, Colors.Lime);
+                 else if (downtrend) TransparentColor(Opacity, Colors.Crimson);
+                 else BackBrush = null;
+             }
+
+             // --- Stop/Target Management ---
+             ManageAutoBreakeven();
+             ManageStopLoss();
+             SetProfitTargets();
+
+             // --- PnL & Status Display ---
+             if (showPnl) ShowPNLStatus();
+             if (showDailyPnl) DrawStrategyPnL(); // Updates maxProfit
+
+             // --- Reset Trades Per Direction Counter ---
+             if (TradesPerDirection){
+                 if (counterLong != 0 && Close[0] < Open[0]) counterLong = 0;
+                 if (counterShort != 0 && Close[0] > Open[0]) counterShort = 0;
+             }
+
+             // --- Reset State When Flat ---
+             if (isFlat)
+             {
+                 lock(orderLock)
+                 {
+                     List<Order> stopsToCancel = Orders.Where(o => o.OrderState == OrderState.Working && o.IsStopMarket).ToList();
+                     if (stopsToCancel.Count > 0)
+                     {
+                         PrintOnce($"Flat_CancelStops_{CurrentBar}", $"{Time[0]}: Position flat. Cancelling {stopsToCancel.Count} working stop(s).");
+                         foreach (Order stopOrder in stopsToCancel) { try { CancelOrder(stopOrder); } catch(Exception ex) { /* Handle error */ } }
+                     }
+                 }
+
+                 quickLongBtnActive = false;
+                 quickShortBtnActive = false;
+                 ProgressState = 0;
+                 _beRealized = false;
+
+                 lock (orderLock) { activeOrders.Clear(); }
+             }
+
+             // --- Process Auto Exits (Based on abstract conditions) ---
+             if (enableExit)
+             {
+                 if (ValidateExitLong())
+                 {
+                     List<string> labelsToExit = GetRelevantOrderLabels();
+                     PrintOnce($"ExitLong_Auto_{CurrentBar}", $"{Time[0]}: Auto Exit Long triggered. Exiting labels: {string.Join(", ", labelsToExit)}");
+                     foreach (string label in labelsToExit) { ExitLong("Auto Exit Long", label); }
+                 }
+
+                 if (ValidateExitShort())
+                 {
+                     List<string> labelsToExit = GetRelevantOrderLabels();
+                     PrintOnce($"ExitShort_Auto_{CurrentBar}", $"{Time[0]}: Auto Exit Short triggered. Exiting labels: {string.Join(", ", labelsToExit)}");
+                     foreach (string label in labelsToExit) { ExitShort("Auto Exit Short", label); }
+                 }
+             }
+
+             // --- Kill Switch / Limit Check (FINAL CHECK) ---
+             KillSwitch(); // Updates maxProfit and checks limits
         }
-		#endregion
+        #endregion
 		
 		#region Transparent Background Color
 		private void TransparentColor(byte percentTransparency, Color baseColor)
@@ -1188,56 +1149,56 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         // ***** MODIFIED SECTION *****
         // This method now ALWAYS calculates an initial stop PRICE.
         // If trailing, it uses Exit...StopMarket for initial placement.
-//        // If fixed, it uses the SetFixedStopLoss helper (which also uses Exit...StopMarket).
-//        private void SetStopLosses(string entryOrderLabel)
-//        {
-//            // --- Pre-checks ---
-//            if (Position.MarketPosition == MarketPosition.Flat) return;
-//            if (TickSize <= 0) { PrintOnce($"SetStopLosses_TickSize_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: Cannot set stops for {entryOrderLabel}. Invalid TickSize."); return; }
+        // If fixed, it uses the SetFixedStopLoss helper (which also uses Exit...StopMarket).
+        private void SetStopLosses(string entryOrderLabel)
+        {
+            // --- Pre-checks ---
+            if (Position.MarketPosition == MarketPosition.Flat) return;
+            if (TickSize <= 0) { PrintOnce($"SetStopLosses_TickSize_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: Cannot set stops for {entryOrderLabel}. Invalid TickSize."); return; }
 
-//            double initialStopPrice; // Always calculate price now
+            double initialStopPrice; // Always calculate price now
 
-//            // --- Check for Override Condition ---
-//            bool useRegChanOverride = (TrailStopType == TrailStopTypeKC.Regression_Channel_Trail && EnableRegChanProfitTarget);
-//            int effectiveInitialStopTicks = useRegChanOverride ? 120 : InitialStop; // Use 120 if override is active
+            // --- Check for Override Condition ---
+            bool useRegChanOverride = (TrailStopType == TrailStopTypeKC.Regression_Channel_Trail && EnableRegChanProfitTarget);
+            int effectiveInitialStopTicks = useRegChanOverride ? 120 : InitialStop; // Use 120 if override is active
 
-//            if (useRegChanOverride)
-//                 PrintOnce($"SetStopLosses_OverrideStop_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: RegChan Trail & Target active. Using OVERRIDE InitialStop = {effectiveInitialStopTicks} ticks.");
+            if (useRegChanOverride)
+                 PrintOnce($"SetStopLosses_OverrideStop_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: RegChan Trail & Target active. Using OVERRIDE InitialStop = {effectiveInitialStopTicks} ticks.");
 
 
-//            // --- Determine Reference Price ---
-//            double referencePrice = 0;
-//            if (Position.MarketPosition == MarketPosition.Long) referencePrice = GetCurrentBid();
-//            else if (Position.MarketPosition == MarketPosition.Short) referencePrice = GetCurrentAsk();
+            // --- Determine Reference Price ---
+            double referencePrice = 0;
+            if (Position.MarketPosition == MarketPosition.Long) referencePrice = GetCurrentBid();
+            else if (Position.MarketPosition == MarketPosition.Short) referencePrice = GetCurrentAsk();
 
-//            if (referencePrice == 0)
-//            {
-//                PrintOnce($"SetStopLosses_RefPrice_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: Cannot determine reference price for initial stop for {entryOrderLabel}. Skipping initial stop.");
-//                return;
-//            }
+            if (referencePrice == 0)
+            {
+                PrintOnce($"SetStopLosses_RefPrice_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: Cannot determine reference price for initial stop for {entryOrderLabel}. Skipping initial stop.");
+                return;
+            }
 
-//            // --- Calculate Initial Stop Price using effective ticks ---
-//            initialStopPrice = (Position.MarketPosition == MarketPosition.Long)
-//                                 ? referencePrice - (effectiveInitialStopTicks * TickSize) // Use effective value
-//                                 : referencePrice + (effectiveInitialStopTicks * TickSize); // Use effective value
+            // --- Calculate Initial Stop Price using effective ticks ---
+            initialStopPrice = (Position.MarketPosition == MarketPosition.Long)
+                                 ? referencePrice - (effectiveInitialStopTicks * TickSize) // Use effective value
+                                 : referencePrice + (effectiveInitialStopTicks * TickSize); // Use effective value
 
-//            PrintOnce($"SetStopLosses_InitPrice_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: [Initial Stop Setup] Calculated initial stop PRICE: {initialStopPrice:F5} for label {entryOrderLabel} (Ref: {referencePrice:F5}, Ticks Used: {effectiveInitialStopTicks}).");
+            PrintOnce($"SetStopLosses_InitPrice_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: [Initial Stop Setup] Calculated initial stop PRICE: {initialStopPrice:F5} for label {entryOrderLabel} (Ref: {referencePrice:F5}, Ticks Used: {effectiveInitialStopTicks}).");
 
-//            // --- Validate the calculated stop price ---
-//            if (!IsValidStopPlacement(initialStopPrice, Position.MarketPosition))
-//            {
-//                 PrintOnce($"SetStopLosses_InvalidPlace_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: Initial stop placement {initialStopPrice:F5} is invalid for '{entryOrderLabel}'. Skipping initial stop placement.");
-//                 return;
-//            }
+            // --- Validate the calculated stop price ---
+            if (!IsValidStopPlacement(initialStopPrice, Position.MarketPosition))
+            {
+                 PrintOnce($"SetStopLosses_InvalidPlace_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: Initial stop placement {initialStopPrice:F5} is invalid for '{entryOrderLabel}'. Skipping initial stop placement.");
+                 return;
+            }
 
-//            // --- Apply Stop to Primary Label using Explicit Exit Orders ---
-//            SetFixedStopLoss(entryOrderLabel, CalculationMode.Price, initialStopPrice, false);
-//             string modeInfo = enableTrail ? "(Intended for Trail)" : "(Fixed)";
-//             PrintOnce($"SetStopLosses_Apply_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: Applied initial stop using Exit...StopMarket(Price: {initialStopPrice:F5}) {modeInfo} for label {entryOrderLabel}.");
+            // --- Apply Stop to Primary Label using Explicit Exit Orders ---
+            SetFixedStopLoss(entryOrderLabel, CalculationMode.Price, initialStopPrice, false);
+             string modeInfo = enableTrail ? "(Intended for Trail)" : "(Fixed)";
+             PrintOnce($"SetStopLosses_Apply_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: Applied initial stop using Exit...StopMarket(Price: {initialStopPrice:F5}) {modeInfo} for label {entryOrderLabel}.");
 
-//            // --- Apply Stop to Scaled-In Labels ---
-//            SetMultipleStopLosses(initialStopPrice, enableTrail);
-//        }
+            // --- Apply Stop to Scaled-In Labels ---
+            SetMultipleStopLosses(initialStopPrice, enableTrail);
+        }
 		
         // (SetMultipleStopLosses does not need changes here as it receives the calculated price)
         // ... SetMultipleStopLosses remains the same ...
@@ -1559,7 +1520,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                    && checkTimers()
                    && (dailyLossProfit ? dailyPnL > -DailyLossLimit && dailyPnL < DailyProfitLimit : true)
                    && isFlat
-				   && uptrend
+                   && uptrend
                    && !trailingDrawdownReached
                    && (iBarsSinceExit > 0 ? BarsSinceExitExecution(0, "", 0) > iBarsSinceExit : BarsSinceExitExecution(0, "", 0) > 1 || BarsSinceExitExecution(0, "", 0) == -1)
                    && canTradeOK
@@ -1584,69 +1545,104 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
         #region Entry Execution
 
-        // ***** MODIFIED SECTION ***** REMOVED SetStopLosses/SetProfitTargets calls
+        // ***** MODIFIED SECTION *****
         private void EnterLongPosition()
         {
             counterLong += 1;
             counterShort = 0;
-            string primaryLabel = LE;
+            string primaryLabel = LE; // Default primary label
 
             // --- 1. Submit Base Entry Order ---
             Order baseOrder = SubmitEntryOrder(primaryLabel, OrderType, Contracts);
             if (baseOrder == null)
             {
                 Print($"{Time[0]}: Failed to submit base long entry order {primaryLabel}. Aborting entry sequence.");
-                counterLong -= 1;
-                return;
+                counterLong -= 1; // Decrement counter as entry failed
+                return; // Exit if base entry failed
             }
             Draw.Dot(this, primaryLabel + Convert.ToString(CurrentBars[0]), false, 0, (Close[0]), Brushes.Cyan);
             lastEntryTime = Time[0];
             PrintOnce($"Entry_Base_Submit_{primaryLabel}_{CurrentBar}", $"{Time[0]}: Submitted base long entry: {primaryLabel}");
 
-            // --- 2. Submit Scale-In Entry Orders ---
-            EnterMultipleLongContracts(false);
+            // --- 2. Submit Scale-In Entry Orders (if applicable) ---
+            // This method only submits entries, doesn't set stops/targets
+            EnterMultipleLongContracts(false); // Pass false for isManual
 
-            // --- 3. Set Initial Stop Losses (REMOVED FROM HERE) ---
-            // SetStopLosses(primaryLabel); // <<< REMOVED
+            // --- 3. Set Initial Stop Losses (AFTER all entries submitted) ---
+            // This method handles both single and multiple entries based on settings
+            // It will apply the stop logic (fixed or trailing) based on strategy parameters
+            SetStopLosses(primaryLabel); // Pass the primary label
 
-            // --- 4. Set Profit Targets (REMOVED FROM HERE) ---
-            // SetProfitTargets(); // <<< REMOVED
+            // --- 4. Set Profit Targets (AFTER all entries submitted) ---
+            SetProfitTargets();
 
-            // --- 5. Send Discord Signal (Optional) ---
-            // ... (Discord logic remains, but consider if it should also move to OnExecutionUpdate) ...
-            // It might be better to send the signal AFTER confirmation of fill and stop/target placement.
+            // --- 5. Send Discord Signal (Optional, after core logic) ---
+            if (State == State.Realtime)
+            {
+                try // Wrap in try-catch as it involves external communication
+                {
+                    double _entryPrice = baseOrder.AverageFillPrice > 0 ? baseOrder.AverageFillPrice : GetCurrentAsk(); // Use fill price if available, else current Ask
+                    double _stopLoss = _entryPrice - InitialStop * TickSize; // Calculate based on InitialStop
+                    double _profitTarget = _entryPrice + ProfitTarget * TickSize; // Based on primary PT
+
+                    lastSignalType = "LONG";
+                    lastEntryPrice = _entryPrice;
+                    lastStopLoss = _stopLoss;
+                    lastProfitTarget = _profitTarget;
+                    lastSignalTime = Time[0];
+                    _ = SendSignalToDiscordAsync(lastSignalType, lastEntryPrice, lastStopLoss, lastProfitTarget, lastSignalTime);
+                }
+                catch (Exception ex) { Print($"{Time[0]}: Error preparing Discord signal data: {ex.Message}"); }
+            }
         }
 
-         // ***** MODIFIED SECTION ***** REMOVED SetStopLosses/SetProfitTargets calls
+        // ***** MODIFIED SECTION *****
         private void EnterShortPosition()
         {
             counterLong = 0;
             counterShort += 1;
-            string primaryLabel = SE;
+            string primaryLabel = SE; // Default primary label
 
             // --- 1. Submit Base Entry Order ---
             Order baseOrder = SubmitEntryOrder(primaryLabel, OrderType, Contracts);
              if (baseOrder == null)
             {
                 Print($"{Time[0]}: Failed to submit base short entry order {primaryLabel}. Aborting entry sequence.");
-                counterShort -= 1;
-                return;
+                counterShort -= 1; // Decrement counter as entry failed
+                return; // Exit if base entry failed
             }
             Draw.Dot(this, primaryLabel + Convert.ToString(CurrentBars[0]), false, 0, (Close[0]), Brushes.Yellow);
             lastEntryTime = Time[0];
             PrintOnce($"Entry_Base_Submit_{primaryLabel}_{CurrentBar}", $"{Time[0]}: Submitted base short entry: {primaryLabel}");
 
-            // --- 2. Submit Scale-In Entry Orders ---
-            EnterMultipleShortContracts(false);
 
-            // --- 3. Set Initial Stop Losses (REMOVED FROM HERE) ---
-            // SetStopLosses(primaryLabel); // <<< REMOVED
+            // --- 2. Submit Scale-In Entry Orders (if applicable) ---
+            EnterMultipleShortContracts(false); // Pass false for isManual
 
-            // --- 4. Set Profit Targets (REMOVED FROM HERE) ---
-            // SetProfitTargets(); // <<< REMOVED
+            // --- 3. Set Initial Stop Losses (AFTER all entries submitted) ---
+            SetStopLosses(primaryLabel); // Pass the primary label
 
-            // --- 5. Send Discord Signal (Optional) ---
-            // ... (Discord logic remains) ...
+            // --- 4. Set Profit Targets (AFTER all entries submitted) ---
+            SetProfitTargets();
+
+            // --- 5. Send Discord Signal (Optional, after core logic) ---
+            if (State == State.Realtime)
+            {
+                try
+                {
+                    double _entryPrice = baseOrder.AverageFillPrice > 0 ? baseOrder.AverageFillPrice : GetCurrentBid(); // Use fill price if available, else current Bid
+                    double _stopLoss = _entryPrice + InitialStop * TickSize;
+                    double _profitTarget = _entryPrice - ProfitTarget * TickSize;
+
+                    lastSignalType = "SHORT";
+                    lastEntryPrice = _entryPrice;
+                    lastStopLoss = _stopLoss;
+                    lastProfitTarget = _profitTarget;
+                    lastSignalTime = Time[0];
+                    _ = SendSignalToDiscordAsync(lastSignalType, lastEntryPrice, lastStopLoss, lastProfitTarget, lastSignalTime);
+                }
+                 catch (Exception ex) { Print($"{Time[0]}: Error preparing Discord signal data: {ex.Message}"); }
+            }
         }
         // ***** END OF MODIFIED SECTION *****
 
@@ -1866,257 +1862,93 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		}
 	
 		#endregion
+	
+		#region OnExecutionUpdate
 		
-        #region OnExecutionUpdate
-
-        // ***** MODIFIED SECTION *****
-        protected override void OnExecutionUpdate(Execution execution, string executionId, double price,
+		protected virtual void OnExecutionUpdate(Execution execution, string executionId, double price,
                                            int quantity, MarketPosition marketPosition, string orderId,
                                            DateTime time)
 		{
-            // Process base class OnExecutionUpdate FIRST if it exists (unlikely here but good practice)
-            // base.OnExecutionUpdate(execution, executionId, price, quantity, marketPosition, orderId, time);
-
-		    // --- Handle Fills for Stop/Target Placement ---
-		    if (execution.Order != null && execution.Order.OrderState == OrderState.Filled)
-            {
-                string fromEntrySignal = execution.Order.FromEntrySignal; // Get the label of the filled entry
-
-                // Check if the filled order's label corresponds to one of our ENTRY signals
-                bool isEntryFill = !string.IsNullOrEmpty(fromEntrySignal) &&
-                                   (fromEntrySignal.StartsWith(LE) || fromEntrySignal.StartsWith(SE) ||
-                                    fromEntrySignal.StartsWith(QLE) || fromEntrySignal.StartsWith(QSE) ||
-                                    fromEntrySignal.StartsWith(Add1LE) || fromEntrySignal.StartsWith(Add1SE));
-                                    // Add LE2/SE2 etc. if they should trigger independent stops - unlikely with current logic
-
-                if (isEntryFill)
-                {
-                    PrintOnce($"OnExec_EntryFill_{fromEntrySignal}_{executionId}", $"{time}: ENTRY FILL detected for label '{fromEntrySignal}' @ {price}. Qty: {quantity}. Placing Stop/Target.");
-
-                    // Use a lock to prevent race conditions if multiple fills come in rapidly (unlikely but safe)
-                    lock (orderLock)
-                    {
-                        try
-                        {
-                            // --- Place Initial Stop Loss based on this specific fill ---
-                            // Pass the actual execution price and the signal label
-                            SetInitialStopLossOnFill(fromEntrySignal, price);
-
-                            // --- Place Profit Target(s) based on this specific fill ---
-                            // Pass the actual execution price and the signal label
-                            SetInitialProfitTargetOnFill(fromEntrySignal, price);
-
-                            // Optional: Send Discord signal AFTER stop/target placement attempts
-                            // SendDiscordSignalOnFill(execution);
-                        }
-                        catch (Exception ex)
-                        {
-                             Print($"CRITICAL ERROR in OnExecutionUpdate Stop/Target Placement for {fromEntrySignal}: {ex.Message} --- StackTrace: {ex.StackTrace}");
-                             orderErrorOccurred = true; // Halt strategy if placement fails critically
-                        }
-                    }
-                }
-            }
-
-            // --- Handle Existing Order Tracking Logic ---
-            // (Keep the part that removes orders from the activeOrders dictionary on Fill/Cancel/Reject)
+		    if (execution.Order.Name == "Fixed_Stop")
+		    {
+		        if (isLong)
+		        {
+		            // Update FixedStopLossTicks for long positions
+		            InitialStop = (int)((Position.AveragePrice - price) / TickSize);
+		            Print($"Long Stop Loss adjusted. New FixedStopLossTicks: {InitialStop}");
+		        }
+		        else if (isShort)
+		        {
+		            // Update FixedStopLossTicks for short positions
+		            InitialStop = (int)((price - Position.AveragePrice) / TickSize);
+		            Print($"Short Stop Loss adjusted. New FixedStopLossTicks: {InitialStop}");
+		        }
+		    }
+		
+		    // *** CRITICAL: Track order fills, modifications, and cancellations ***
 		    lock (orderLock)
 		    {
+		        // Find the order in our activeOrders dictionary
 		        string orderLabel = activeOrders.FirstOrDefault(x => x.Value.OrderId == orderId).Key;
-
+		
 		        if (!string.IsNullOrEmpty(orderLabel))
 		        {
 		            switch (execution.Order.OrderState)
 		            {
 		                case OrderState.Filled:
-		                case OrderState.Cancelled:
-		                case OrderState.Rejected:
-                            // Print message is handled above for fills, maybe add for Cancel/Reject
-                            if(execution.Order.OrderState != OrderState.Filled)
-                                Print($"{Time[0]}: Order {orderId} ({orderLabel}) is {execution.Order.OrderState}. Removing from active tracking.");
-		                    activeOrders.Remove(orderLabel);
+		                    Print(string.Format("{0}: Order {1} with label {2} filled.", Time[0], orderId, orderLabel));
+		                    activeOrders.Remove(orderLabel); // Remove the order when it's filled.
+		
+		                    if (execution.Order.OrderState == OrderState.Filled && isFlat)
+		                    {
+		                        if (execution.Order.Name.StartsWith(LE) || execution.Order.Name.StartsWith(QLE) || execution.Order.Name.StartsWith("Add1LE"))
+		                        {
+		                            counterLong = 0;
+		                        }
+		                        else if (execution.Order.Name.StartsWith(SE) || execution.Order.Name.StartsWith(QSE) || execution.Order.Name.StartsWith(Add1SE))
+		                        {
+		                            counterShort = 0;
+		                        }
+		                    }
+		
 		                    break;
+		
+		                case OrderState.Cancelled:
+		                    Print(string.Format("{0}: Order {1} with label {2} cancelled.", Time[0], orderId, orderLabel));
+		                    activeOrders.Remove(orderLabel); // Remove cancelled orders
+		                    break;
+		
+		                case OrderState.Rejected:
+		                    Print(string.Format("{0}: Order {1} with label {2} rejected.", Time[0], orderId, orderLabel));
+		                    activeOrders.Remove(orderLabel); // Remove rejected orders
+		                    break;
+		
 		                default:
-                            // Optional: Log other state changes if needed
-		                    // Print($"{Time[0]}: Order {orderId} ({orderLabel}) updated to state: {execution.Order.OrderState}");
+		                    Print(string.Format("{0}: Order {1} with label {2} updated to state: {3}", Time[0], orderId, orderLabel, execution.Order.OrderState));
 		                    break;
 		            }
 		        }
-		        else if (execution.Order != null && execution.Order.OrderState != OrderState.Unknown && !execution.Order.IsLimit && !execution.Order.IsStopMarket) // Avoid logging updates for working stops/targets placed by strategy
+		        else
 		        {
-		            // Log execution updates for orders NOT tracked by our entry dictionary (could be stops/targets filling, or rogue)
-		            Print($"{Time[0]}: Execution update for untracked order {orderId} ({execution.Order.Name}). State: {execution.Order.OrderState}, Price: {price}, Qty: {quantity}");
-                    // Note: Don't automatically cancel here, as it could be a legitimate stop/target fill. Rogue detection handles cancels.
+		            // This could indicate a rogue order or an order not tracked by the strategy.
+		            Print(string.Format("{0}: Execution update for order {1}, but order is not tracked by the strategy.", Time[0], orderId));
+		
+		            // Attempt to Cancel the Rogue Order
+		            try
+		            {
+		                CancelOrder(execution.Order);
+		                Print(string.Format("{0}: Successfully Canceled the Rogue Order: {1}.", Time[0], orderId));
+		            }
+		            catch (Exception ex)
+		            {
+		                Print(string.Format("{0}: Could not Cancel the Rogue Order: {1}. {2}", Time[0], orderId, ex.Message));
+		                orderErrorOccurred = true;  // Consider whether to halt trading
+		            }
 		        }
 		    }
-            // --- End Existing Order Tracking ---
 		}
-
+		
 		#endregion
-
-        // ***** NEW HELPER METHODS for OnExecutionUpdate *****
-
-        #region Initial Stop/Target Placement on Fill
-
-        // Places the initial stop loss immediately after an entry fill
-        private void SetInitialStopLossOnFill(string filledEntrySignal, double executionPrice)
-        {
-            if (Position.MarketPosition == MarketPosition.Flat) // Should not happen if fill just occurred, but safety check
-            {
-                PrintOnce($"SetInitialStop_Flat_{filledEntrySignal}_{CurrentBar}", $"{Time[0]}: Cannot set initial stop for {filledEntrySignal}, position reported flat immediately after fill.");
-                return;
-            }
-            if (TickSize <= 0) { PrintOnce($"SetInitialStop_TickSize_{filledEntrySignal}_{CurrentBar}", $"{Time[0]}: Cannot set initial stop for {filledEntrySignal}. Invalid TickSize."); return; }
-
-            // --- Check for Override Condition ---
-            bool useRegChanOverride = (TrailStopType == TrailStopTypeKC.Regression_Channel_Trail && EnableRegChanProfitTarget);
-            int effectiveInitialStopTicks = useRegChanOverride ? 120 : InitialStop;
-
-             // --- Calculate Initial Stop Price using executionPrice ---
-            double initialStopPrice = (Position.MarketPosition == MarketPosition.Long)
-                                     ? executionPrice - (effectiveInitialStopTicks * TickSize)
-                                     : executionPrice + (effectiveInitialStopTicks * TickSize);
-
-            PrintOnce($"SetInitialStop_Calc_{filledEntrySignal}_{CurrentBar}", $"{Time[0]}: [On Fill] Calculated initial stop PRICE: {initialStopPrice:F5} for label {filledEntrySignal} (Exec: {executionPrice:F5}, Ticks: {effectiveInitialStopTicks}).");
-
-            // --- Validate Stop Price ---
-             if (!IsValidStopPlacement(initialStopPrice, Position.MarketPosition))
-            {
-                 PrintOnce($"SetInitialStop_Invalid_{filledEntrySignal}_{CurrentBar}", $"{Time[0]}: [On Fill] Initial stop placement {initialStopPrice:F5} is invalid for '{filledEntrySignal}'. Skipping placement.");
-                 return;
-            }
-
-            // --- Apply Stop using Explicit Exit Order ---
-            // Use SetFixedStopLoss helper which now uses Exit...StopMarket
-             try
-             {
-                 SetFixedStopLoss(filledEntrySignal, CalculationMode.Price, initialStopPrice, false);
-                 string modeInfo = enableTrail ? "(Will Trail)" : "(Fixed)"; // Indicate intent
-                 PrintOnce($"SetInitialStop_Apply_{filledEntrySignal}_{CurrentBar}", $"{Time[0]}: [On Fill] Applied initial stop via Exit...StopMarket(Price: {initialStopPrice:F5}) {modeInfo} for label {filledEntrySignal}.");
-             }
-             catch (Exception ex)
-             {
-                 Print($"ERROR Setting Initial Stop on Fill for {filledEntrySignal}: {ex.Message}");
-                 orderErrorOccurred = true;
-             }
-        }
-
-        // Places the initial profit target(s) immediately after an entry fill
-        private void SetInitialProfitTargetOnFill(string filledEntrySignal, double executionPrice)
-        {
-            if (isFlat || TickSize <= 0) return; // Basic safety checks
-
-            // Determine the base label and scaled labels based on the filled signal
-            string baseLabel = "";
-            string labelPrefix = "";
-            bool isQuickEntry = false;
-
-            if (filledEntrySignal.StartsWith(LE) || filledEntrySignal.StartsWith(QLE)) {
-                isQuickEntry = filledEntrySignal.StartsWith(QLE);
-                baseLabel = isQuickEntry ? QLE : LE;
-                labelPrefix = isQuickEntry ? "QLE" : LE;
-            } else if (filledEntrySignal.StartsWith(SE) || filledEntrySignal.StartsWith(QSE)) {
-                 isQuickEntry = filledEntrySignal.StartsWith(QSE);
-                 baseLabel = isQuickEntry ? QSE : SE;
-                 labelPrefix = isQuickEntry ? "QSE" : SE;
-            } else if (filledEntrySignal.StartsWith(Add1LE) || filledEntrySignal.StartsWith(Add1SE)) {
-                 // Decide how to handle targets for Add1 entries - often they don't get their own target
-                 PrintOnce($"SetInitialPT_Add1_{filledEntrySignal}_{CurrentBar}", $"{Time[0]}: [On Fill] Skipping specific profit target for Add1 entry {filledEntrySignal}.");
-                 return;
-            }
-            else {
-                 PrintOnce($"SetInitialPT_UnknownLabel_{filledEntrySignal}_{CurrentBar}", $"{Time[0]}: [On Fill] Cannot determine profit target logic for unknown entry label {filledEntrySignal}.");
-                 return; // Unknown entry label
-            }
-
-
-            // --- Route based on active Profit Target Mode ---
-            if (EnableRegChanProfitTarget)
-            {
-                // Calculate RegChan Target (can reuse existing helper, but needs executionPrice)
-                SetRegChanProfitTargetOnFill(executionPrice, filledEntrySignal); // Pass execution price
-            }
-            else if (EnableFixedProfitTarget)
-            {
-                // Apply fixed targets based on Ticks from executionPrice
-                SetFixedProfitTargetsOnFill(executionPrice, baseLabel, labelPrefix);
-            }
-            else if (EnableDynamicProfitTarget)
-            {
-                // Dynamic Pivot Target (usually set based on market conditions, maybe less critical here unless entry is far from pivots)
-                // For simplicity, we might just apply the standard fixed target as a fallback, or recalculate based on pivots vs execution price
-                 PrintOnce($"SetInitialPT_DynamicInfo_{filledEntrySignal}_{CurrentBar}", $"{Time[0]}: [On Fill] Dynamic Profit Target mode active. Re-evaluating standard PT placement for {filledEntrySignal}.");
-                 SetDynamicPivotProfitTargets(); // Re-call the main method which checks market conditions
-            }
-        }
-
-        // Helper specifically for setting fixed targets based on execution price
-        private void SetFixedProfitTargetsOnFill(double execPrice, string baseLbl, string prefix)
-        {
-             try
-            {
-                // Apply base target (using ticks from execution price)
-                if(ProfitTarget > 0) SetProfitTarget(baseLbl, CalculationMode.Ticks, ProfitTarget);
-
-                // Apply scaled targets if enabled (using ticks from execution price)
-                if(EnableProfitTarget2 && ProfitTarget2 > 0) SetProfitTarget(prefix + "2", CalculationMode.Ticks, ProfitTarget2);
-                if(EnableProfitTarget3 && ProfitTarget3 > 0) SetProfitTarget(prefix + "3", CalculationMode.Ticks, ProfitTarget3);
-                if(EnableProfitTarget4 && ProfitTarget4 > 0) SetProfitTarget(prefix + "4", CalculationMode.Ticks, ProfitTarget4);
-
-                 PrintOnce($"SetInitialPT_Fixed_{baseLbl}_{CurrentBar}", $"{Time[0]}: [On Fill] Applied fixed profit target(s) relative to exec price {execPrice:F5} for base label {baseLbl}.");
-            }
-            catch (Exception ex)
-            {
-                Print($"Error setting Fixed Profit Targets on Fill for {baseLbl}: {ex.Message}");
-                orderErrorOccurred = true;
-            }
-        }
-
-         // Helper specifically for setting RegChan targets based on execution price
-        private void SetRegChanProfitTargetOnFill(double execPrice, string filledEntrySignal)
-        {
-             if (CurrentBar < RegChanPeriod - 1 || TickSize <= 0) return;
-
-            // --- Check for Override Condition ---
-            bool useRegChanOverride = (TrailStopType == TrailStopTypeKC.Regression_Channel_Trail && EnableRegChanProfitTarget);
-            int effectiveFallbackProfitTargetTicks = useRegChanOverride ? 60 : (int)ProfitTarget;
-
-            double targetPrice = 0;
-            string targetBandName = "";
-            bool useFallbackTarget = false;
-
-            if (Position.MarketPosition == MarketPosition.Long) { targetPrice = RegressionChannel2.Upper[1]; targetBandName = "Upper"; } // Use RegChan2 for targets usually
-            else if (Position.MarketPosition == MarketPosition.Short) { targetPrice = RegressionChannel2.Lower[1]; targetBandName = "Lower"; }
-            else return;
-
-            double priceDifference = (Position.MarketPosition == MarketPosition.Long) ? (targetPrice - execPrice) : (execPrice - targetPrice);
-            double targetTicksDouble = priceDifference / TickSize;
-
-            if (targetTicksDouble < MinRegChanTargetDistanceTicks) useFallbackTarget = true;
-
-            int targetTicks;
-            if (useFallbackTarget) {
-                targetTicks = effectiveFallbackProfitTargetTicks;
-                if (targetTicks < 1) targetTicks = 1;
-            } else {
-                targetTicks = (int)Math.Max(1.0, Math.Round(targetTicksDouble, MidpointRounding.AwayFromZero));
-            }
-
-             // Apply to the specific filled entry signal label
-            try
-            {
-                 PrintOnce($"SetInitialPT_RegChan_{filledEntrySignal}_{CurrentBar}", $"{Time[0]}: [On Fill] Setting RegChan PT ({targetTicks} ticks, Fallback: {useFallbackTarget}) for label: {filledEntrySignal}");
-                 SetProfitTarget(filledEntrySignal, CalculationMode.Ticks, targetTicks);
-                 // If scaling, need to decide if *all* targets go here or just the one matching the fill label
-                 // Current logic assumes SetProfitTarget handles the 'fromEntrySignal' association correctly.
-            }
-            catch (Exception ex) { HandleSetTargetError(filledEntrySignal, useFallbackTarget ? "Fallback" : "RegChan", ex); }
-        }
-
-
-        #endregion
-
-        // ***** END NEW HELPER METHODS *****
 		
 		#region Pivot Profit Targets
 
@@ -2841,31 +2673,39 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 					InitialDecoration = (strategy, button) => strategy.DecorateButton(button, ButtonState.Neutral, "Buy", foreground: Brushes.White, background: Brushes.DarkGreen),
 					ClickAction = (strategy) =>
 					{
-                        string primaryLabel = QLE;
+                        string primaryLabel = QLE; // Quick Long Entry label
 
-						if (isManualEnabled /* Removed && strategy.uptrend - Allow manual override? */) // Consider if trend check is needed for manual
+						if (isManualEnabled && strategy.uptrend) // Ensure manual mode is on and trend is favorable
 						{
 							strategy.Print("Quick Long Button Clicked");
-							strategy.quickLongBtnActive = true;
+							strategy.quickLongBtnActive = true; // Flag that the last entry was manual/quick
 
                             // --- 1. Submit Base Quick Entry ---
                             Order baseOrder = strategy.SubmitEntryOrder(primaryLabel, strategy.OrderType, Convert.ToInt32(strategy.Contracts));
                             if (baseOrder == null)
                             {
                                 Print($"{Time[0]}: Failed to submit base quick long entry order {primaryLabel}. Aborting quick entry.");
-                                strategy.quickLongBtnActive = false;
+                                strategy.quickLongBtnActive = false; // Reset flag
                                 return;
                             }
                             PrintOnce($"Entry_Quick_Base_Submit_{primaryLabel}_{CurrentBar}", $"{Time[0]}: Submitted quick long entry: {primaryLabel}");
 
-                            // --- 2. Submit Scale-In Orders ---
-							strategy.EnterMultipleLongContracts(true);
+                            // --- 2. Submit Scale-In Orders (if enabled) ---
+							strategy.EnterMultipleLongContracts(true); // Pass true for isManual/Quick
 
-                            // --- 3 & 4. Stop/Target Placement REMOVED - Handled by OnExecutionUpdate ---
-                            // strategy.SetStopLosses(primaryLabel); // <<< REMOVED
-                            // strategy.SetProfitTargets();         // <<< REMOVED
+                            // --- 3. Set Initial Stop Losses ---
+                            strategy.SetStopLosses(primaryLabel); // Pass the quick label
+
+                            // --- 4. Set Profit Targets ---
+                            strategy.SetProfitTargets();
+
+                            // Note: No automatic Discord signal for manual quick entry in this example
 						}
-                        else { /* ... */ }
+                        else
+                        {
+                             strategy.Print($"Quick Long Button: Cannot execute. Manual Enabled: {isManualEnabled}, Uptrend: {strategy.uptrend}");
+                             strategy.quickLongBtnActive = false; // Reset flag if execution didn't proceed
+                        }
 					}
 				},
 				new ButtonDefinition
@@ -2876,31 +2716,39 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 					InitialDecoration = (strategy, button) => strategy.DecorateButton(button, ButtonState.Neutral, "Sell", foreground: Brushes.White, background: Brushes.DarkRed),
 					ClickAction = (strategy) =>
 					{
-                        string primaryLabel = QSE;
+                        string primaryLabel = QSE; // Quick Short Entry label
 
-						if (isManualEnabled /* Removed && strategy.downtrend */ ) // Consider if trend check is needed for manual
+						if (isManualEnabled && strategy.downtrend) // Ensure manual mode is on and trend is favorable
 						{
 							strategy.Print("Quick Short Button Clicked");
-							strategy.quickShortBtnActive = true;
+							strategy.quickShortBtnActive = true; // Flag that the last entry was manual/quick
 
                             // --- 1. Submit Base Quick Entry ---
                             Order baseOrder = strategy.SubmitEntryOrder(primaryLabel, strategy.OrderType, Convert.ToInt32(strategy.Contracts));
                             if (baseOrder == null)
                             {
                                 Print($"{Time[0]}: Failed to submit base quick short entry order {primaryLabel}. Aborting quick entry.");
-                                strategy.quickShortBtnActive = false;
+                                strategy.quickShortBtnActive = false; // Reset flag
                                 return;
                             }
                              PrintOnce($"Entry_Quick_Base_Submit_{primaryLabel}_{CurrentBar}", $"{Time[0]}: Submitted quick short entry: {primaryLabel}");
 
-                            // --- 2. Submit Scale-In Orders ---
-							strategy.EnterMultipleShortContracts(true);
+                            // --- 2. Submit Scale-In Orders (if enabled) ---
+							strategy.EnterMultipleShortContracts(true); // Pass true for isManual/Quick
 
-                            // --- 3 & 4. Stop/Target Placement REMOVED - Handled by OnExecutionUpdate ---
-                            // strategy.SetStopLosses(primaryLabel); // <<< REMOVED
-                            // strategy.SetProfitTargets();         // <<< REMOVED
+                            // --- 3. Set Initial Stop Losses ---
+                            strategy.SetStopLosses(primaryLabel); // Pass the quick label
+
+                            // --- 4. Set Profit Targets ---
+                            strategy.SetProfitTargets();
+
+                            // Note: No automatic Discord signal for manual quick entry in this example
 						}
-                        else { /* ... */ }
+                        else
+                        {
+                             strategy.Print($"Quick Short Button: Cannot execute. Manual Enabled: {isManualEnabled}, Downtrend: {strategy.downtrend}");
+                             strategy.quickShortBtnActive = false; // Reset flag if execution didn't proceed
+                        }
 					}
 				},
 				new ButtonDefinition
@@ -3008,7 +2856,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 					Name = DonatePayPalButton,
 					Content = "Donate (PayPal)",
 					ToolTip = "Support the developer via PayPal",
-					InitialDecoration = (strategy, button) => strategy.DecorateButton(button, ButtonState.Neutral, "Donate (PayPal)", background: Brushes.Blue, foreground: Brushes.Yellow),
+					InitialDecoration = (strategy, button) => strategy.DecorateButton(button, ButtonState.Neutral, "Donate (PayPal)", background: Brushes.DarkBlue, foreground: Brushes.Yellow),
 					ClickAction = (strategy) =>
 					{
 						strategy.HandlePayPalDonationClick();
@@ -3683,7 +3531,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			textLine6 = "Bars Since Exit ";
 			textLine7 = $"{iBarsSinceExit}    |    " + (iBarsSinceExit > 1 ?  "On" : "Off");
 			string statusPnlText = textLine0 + "\t" + textLine1 + "\n" + textLine2 + "  " + textLine3 + "\n" + textLine4 + "  " + textLine5+ "\n" + textLine6 + "\t";
-			SimpleFont font = new SimpleFont("Arial", 16);
+			SimpleFont font = new SimpleFont("Arial", FontSize);
 			
 			Draw.TextFixed(this, "statusPnl", statusPnlText, PositionPnl, colorPnl, font, Brushes.Transparent, Brushes.Transparent, 0);
 								
@@ -3775,227 +3623,272 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		
 		#region Daily PNL
 		
-		protected override void OnPositionUpdate(Cbi.Position position, double averagePrice, 
-			int quantity, Cbi.MarketPosition marketPosition)
-		{			
-			if (isFlat && SystemPerformance.AllTrades.Count > 0)
-			{
-//				PositionPnl = TextPosition.BottomLeft;
-//				totalPnL = 0; //backtest
-			
-				totalPnL = SystemPerformance.RealTimeTrades.TradesPerformance.Currency.CumProfit; ///Double that sets the total PnL 
-				dailyPnL = (totalPnL) - (cumPnL); ///Your daily limit is the difference between these
-				
-				// Re-enable the strategy if it was disabled by the DD and totalPnL increases
-				if (enableTrailingDrawdown && trailingDrawdownReached && totalPnL > maxProfit - TrailingDrawdown)
-	            {
-	                trailingDrawdownReached = false;
-					isAutoEnabled = true;
-					Print("Trailing Drawdown Lifted. Strategy Re-Enabled!");
-				}
-	
-				
-				if (dailyPnL <= -DailyLossLimit) //Print this when daily Pnl is under Loss Limit
-				{
-					Print("Daily Loss of " + DailyLossLimit +  " has been hit. No More Entries! Daily PnL >> " + dailyPnL + " <<" +  Time[0]);
-					
-					Text myTextLoss = Draw.TextFixed(this, "loss_text", "Daily Loss of " + DailyLossLimit +  " has been hit. No More Entries! Daily PnL >> " + "$" + totalPnL + " <<", PositionDailyPNL, colorDailyProfitLoss, ChartControl.Properties.LabelFont, Brushes.Transparent, Brushes.Transparent, 100);
-					myTextLoss.Font = new SimpleFont("Arial", 18) {Bold = true };
-				}				
-				
-				if (dailyPnL >= DailyProfitLimit) //Print this when daily Pnl is above Profit limit
-				{
-					
-					Print("Daily Profit of " + DailyProfitLimit +  " has been hit. No more Entries! Daily PnL >>" +  dailyPnL + " <<" + Time[0]);
-					
-					Text myTextProfit = Draw.TextFixed(this, "profit_text", "Daily Profit of " + DailyProfitLimit +  " has been hit. No more Entries! Daily PnL >>" + "$" +  totalPnL + " <<", PositionDailyPNL, colorDailyProfitLoss, ChartControl.Properties.LabelFont, Brushes.Transparent, Brushes.Transparent, 100);
-					myTextProfit.Font = new SimpleFont("Arial", 18) {Bold = true };	
-				}
-			}	
-			
-			if (isFlat)	checkPositions(); // Detect unwanted Positions opened (possible rogue Order?)						
+		// In OnPositionUpdate (Refined PnL Handling)
+		protected override void OnPositionUpdate(Cbi.Position position, double averagePrice,
+		    int quantity, Cbi.MarketPosition marketPosition)
+		{
+		    // This update happens AFTER a trade closes or adjusts.
+		    // totalPnL here gets the latest REALIZED PnL from the system.
+		    // This is suitable for tracking cumPnL for daily reset.
+		    totalPnL = SystemPerformance.RealTimeTrades.TradesPerformance.Currency.CumProfit;
+		
+		    // Calculate current TOTAL PnL for limit checks immediately after update
+		    double currentUnrealized = Account.Get(AccountItem.UnrealizedProfitLoss, Currency.UsDollar); // Get current unrealized
+		    double currentTotalPnL = totalPnL + currentUnrealized; // Combine realized + unrealized
+		
+		    // Update maxProfit based on the absolute peak TOTAL PnL encountered so far
+		    // It's better to update this in DrawStrategyPnL or KillSwitch where total PnL is calculated frequently.
+		    // We will primarily rely on the update within DrawStrategyPnL for display purposes.
+		
+		    // Calculate daily PnL based on the difference between current TOTAL PnL and start-of-day REALIZED PnL
+		    // This reflects the total gain/loss *during* the current day.
+		    dailyPnL = currentTotalPnL - cumPnL;
+		
+		    // --- Check Limits using currentTotalPnL and updated dailyPnL ---
+		
+		    // Check if Trailing Drawdown was hit and if current PnL has recovered above the threshold
+		    double currentDrawdownFromPeak = Math.Max(0, maxProfit - currentTotalPnL); // Calculate current drop from peak
+		    if (enableTrailingDrawdown && trailingDrawdownReached && currentDrawdownFromPeak < TrailingDrawdown)
+		    {
+		        trailingDrawdownReached = false;
+		        // Re-enable auto trading ONLY if it was disabled *by the system* due to drawdown
+		        // Preserve manual disabling by user or chop detection.
+		        // Need a specific flag like 'autoDisabledByDrawdown' or check reason for isAutoEnabled being false.
+		        // For simplicity here, let's assume drawdown was the primary reason if isAutoEnabled is false AND trailingDrawdownReached was true.
+		         if (!isAutoEnabled) // Check if it needs re-enabling
+		         {
+		            isAutoEnabled = true; // Cautiously re-enable
+		            Print($"{Time[0]}: Trailing Drawdown condition lifted ({currentDrawdownFromPeak:C} < {TrailingDrawdown:C}). Auto trading RE-ENABLED.");
+		            // Potentially update Auto button UI here if needed
+		            ChartControl?.Dispatcher.InvokeAsync(() => {
+		                DecorateButton(autoBtn, true ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Auto On", "\uD83D\uDD13 Auto Off");
+		                DecorateButton(manualBtn, !true ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Manual On", "\uD83D\uDD13 Manual Off");
+		            });
+		         } else {
+		             Print($"{Time[0]}: Trailing Drawdown condition lifted ({currentDrawdownFromPeak:C} < {TrailingDrawdown:C}). Auto trading was already enabled.");
+		         }
+		    }
+
+
+		    if (isFlat) // Only check daily limits/print messages when flat after a trade update
+		    {
+		        if (dailyLossProfit)
+		        {
+		            if (dailyPnL <= -DailyLossLimit)
+		            {
+		                PrintOnce($"DailyLossLimitHit_{CurrentBar}", $"Daily Loss Limit of {DailyLossLimit:C} hit. No More Entries! Daily PnL: {dailyPnL:C} at {Time[0]}");
+		                // isAutoEnabled = false; // Disable strategy - KillSwitch handles this
+		            }
+		
+		            if (dailyPnL >= DailyProfitLimit)
+		            {
+		                PrintOnce($"DailyProfitLimitHit_{CurrentBar}", $"Daily Profit Limit of {DailyProfitLimit:C} hit. No more Entries! Daily PnL: {dailyPnL:C} at {Time[0]}");
+		                 // isAutoEnabled = false; // Disable strategy - KillSwitch handles this
+		            }
+		        }
+		        checkPositions(); // Optional check for rogue orders when flat
+		    }
+		
+		    // Note: KillSwitch runs on every bar and handles disabling based on Drawdown/Limits more reliably.
 		}
 		
 		#endregion	
 		
-//		protected override void OnRender(ChartControl chartControl, ChartScale chartScale)
-//		{
-//			base.OnRender(chartControl, chartScale);
-//			if (showDailyPnl) DrawStrategyPnL(chartControl);
-//		}
+		// In DrawStrategyPnL (Corrected Drawdown and Max Profit)
+		        protected void DrawStrategyPnL()
+        {
+            // ... (Account connection check remains the same) ...
 
-		protected void DrawStrategyPnL()
-		{	
-			if (Account == null) return; // Added safety check for connection
-		
-		    // ... (Get account PnL logic remains the same) ...
-		    double accountRealized = (State == State.Realtime) ? Account.Get(AccountItem.RealizedProfitLoss, Currency.UsDollar) : SystemPerformance.AllTrades.TradesPerformance.Currency.CumProfit;
-		    double accountUnrealized = (State == State.Realtime) ? Account.Get(AccountItem.UnrealizedProfitLoss, Currency.UsDollar) : (Position != null && Position.MarketPosition != MarketPosition.Flat ? Position.GetUnrealizedProfitLoss(PerformanceUnit.Currency, Close[0]) : 0); // Safety for Position
-		    double accountTotal = accountRealized + accountUnrealized;
-		    dailyPnL = accountTotal - cumPnL; // Assuming cumPnL is correctly managed elsewhere
-		    if (accountTotal > maxProfit) maxProfit = accountTotal;
-		
-		    // --- Determine Trend and Signal Strings ---
-		    // Need to ensure these conditions don't themselves cause issues if called too early
-		    // But typically OnBarUpdate handles the main indicator calculations first.
-		    string trendStatus = uptrend ? "Up" : downtrend ? "Down" : "Neutral";
-		    string signalStatus = "No Signal"; // Default
+            // --- Get PnL Values ---
+            double accountRealized = 0;
+            double accountUnrealized = 0;
+            double accountTotal = 0;
 
-		    // These checks rely on flags set in OnBarUpdate, which should be safe if OnBarUpdate handled warm-up
-		    if (IsLongEntryConditionMet()) signalStatus = "Long Ready";
-		    else if (IsShortEntryConditionMet()) signalStatus = "Short Ready";
-		
-		    // --- Apply Overrides based on State ---
-		    if (!isFlat) signalStatus = "In Position";
-			
-			if (EnableChoppinessDetection)
-			{
-			    if (!isAutoEnabled && !autoDisabledByChop) signalStatus = "Auto OFF (Manual)"; // User turned it off
-			
-				if (marketIsChoppy) // Choppiness override (applies even if Auto is OFF manually)
-			    {
-			        trendStatus = "Choppy";
-			        signalStatus = "No Trade (Chop)";
-			    }
-			     if (!isAutoEnabled && autoDisabledByChop) signalStatus = "Auto OFF (Chop)"; // System turned it off due to chop
-			}
-			
-		    // Other overrides (higher priority?)
-		    if (!checkTimers()) signalStatus = "Outside Hours";
-		    if (orderErrorOccurred) signalStatus = "Order Error!";
-		    if (enableTrailingDrawdown && trailingDrawdownReached) signalStatus = "Drawdown Limit Hit";
-		    if (dailyLossProfit && dailyPnL <= -DailyLossLimit) signalStatus = "Loss Limit Hit";
-		    if (dailyLossProfit && dailyPnL >= DailyProfitLimit) signalStatus = "Profit Limit Hit";
-		
-		    string pnlSource = (State == State.Realtime) ? "Account" : "System";
-		    // Added null check for Account.Connection
-		    string connectionStatus = (Account.Connection != null) ? Account.Connection.Status.ToString() : "N/A";
-		
-		    // --- FIXED INDICATOR VALUE DISPLAY ---
-		    // Instead of IsValidDataPoint, check if CurrentBar is sufficient for the indicator's period.
-		    // This prevents displaying default values (like 0) during the initial strategy warm-up.
-		
-		    // Get the period for Momentum1 (it was hardcoded 14 during initialization)
-		    // If Momentum1 instance exists and has a Period property, use that, otherwise default to known value
-		    int momentumPeriod = (Momentum1 != null ? Momentum1.Period : 14);
-		    // BuySellPressure readiness check - using BarsRequiredToTrade as proxy
-		    // Assuming BuySellPressure1 needs at least BarsRequiredToTrade bars.
-		    int buySellPressureRequiredBars = BarsRequiredToTrade; // Or specific period if known for BuySellPressure
-		
-		    // Check CurrentBar against the required period (0-based index means CurrentBar >= Period - 1)
-			
+            // Use Account PnL in Realtime if connected
+            if (State == State.Realtime && Account.Connection != null && Account.Connection.Status == ConnectionStatus.Connected) // Added null check for safety
+            {
+                accountRealized = Account.Get(AccountItem.RealizedProfitLoss, Currency.UsDollar);
+                accountUnrealized = Account.Get(AccountItem.UnrealizedProfitLoss, Currency.UsDollar);
+            }
+            // Use SystemPerformance otherwise (Backtest/Historical/Optimization)
+            // Corrected State Check: Removed State.Optimization
+            else if (State == State.Historical)
+            {
+                accountRealized = SystemPerformance.AllTrades.TradesPerformance.Currency.CumProfit;
+                accountUnrealized = (Position != null && Position.MarketPosition != MarketPosition.Flat)
+                                    ? Position.GetUnrealizedProfitLoss(PerformanceUnit.Currency, Close[0])
+                                    : 0;
+            }
+            else
+            {
+                // Handle other states (Configure, SetDefaults etc.) - PnL likely 0
+            }
+
+            accountTotal = accountRealized + accountUnrealized;
+
+            // ... (Rest of DrawStrategyPnL remains the same as the previous correct version) ...
+
+            // --- Update Max Profit based on TOTAL PnL ---
+            if (maxProfit == double.MinValue && accountTotal > double.MinValue) { maxProfit = accountTotal; }
+            else if (accountTotal > maxProfit) { maxProfit = accountTotal; }
+
+            // --- Calculate Daily PnL ---
+            dailyPnL = accountTotal - cumPnL;
+
+            // --- Calculate Drawdown ---
+            double currentDrawdown = Math.Max(0, maxProfit - accountTotal);
+
+            // --- Calculate Remaining Drawdown ---
+            double remainingDrawdown = TrailingDrawdown - currentDrawdown;
+
+            // --- Determine Status Strings ---
+            // (Keep the status logic from the previous correct version)
+            string trendStatus = uptrend ? "Up" : downtrend ? "Down" : "Neutral";
+            string signalStatus = "No Signal";
+            // ... apply overrides based on isFlat, isAutoEnabled, autoDisabledByChop, marketIsChoppy, limits etc. ...
+            if (!isFlat) signalStatus = "In Position";
+            if (marketIsChoppy) { trendStatus = "Choppy"; signalStatus = "No Trade (Chop)"; }
+            if (!isAutoEnabled) { signalStatus = autoDisabledByChop ? "Auto OFF (Chop)" : "Auto OFF (Manual)"; }
+            if (!checkTimers()) signalStatus = "Outside Hours";
+            if (orderErrorOccurred) signalStatus = "Order Error!";
+            if (enableTrailingDrawdown && currentDrawdown >= TrailingDrawdown) { signalStatus = "Drawdown Limit Hit"; trailingDrawdownReached = true; }
+            if (dailyLossProfit && dailyPnL <= -DailyLossLimit) signalStatus = "Loss Limit Hit";
+            if (dailyLossProfit && dailyPnL >= DailyProfitLimit) signalStatus = "Profit Limit Hit";
+
+
+            // --- Indicator Values ---
+            // (Keep the indicator display logic from the previous correct version)
             string adxStatus = currentAdx > AdxThreshold ? $"Trending ({currentAdx:F1})" : $"Choppy ({currentAdx:F1})";
-			string momoStatus = currentMomentum > 0 ? $"Up ({currentMomentum:F1})" : currentMomentum < 0 ? $"Down ({currentMomentum:F1})" : $"Neutral ({currentMomentum:F1})";
-		    // Assuming buyPressure/sellPressure series are populated when BuySellPressure1 is calculated in OnBarUpdate
-		    string buyPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? buyPressure[0].ToString("F1") : "N/A";
-		    string sellPressText = CurrentBar >= buySellPressureRequiredBars - 1 ? sellPressure[0].ToString("F1") : "N/A";
-		    // --- END FIXED INDICATOR VALUE DISPLAY ---
-		
-		    string realTimeTradeText =
-		        $"{Account.Name} | {(Account.Connection != null ? Account.Connection.Options.Name : "N/A")} ({connectionStatus})\n" +
-		        $"PnL Src: {pnlSource}\n" +
-		        $"Real PnL:\t{accountRealized:C}\n" +
-		        $"Unreal PnL:\t{accountUnrealized:C}\n" +
-		        $"Total PnL:\t{accountTotal:C}\n" +
-		        $"Daily PnL:\t{dailyPnL:C}\n" +
-		        $"Max Profit:\t{(maxProfit == double.MinValue ? "N/A" : maxProfit.ToString("C"))}\n" +
-		        $"-------------\n" +
-		        $"ADX:\t\t{adxStatus}\n" +             // Use safe text
-		        $"Momentum:\t{momoStatus}\n" +           // Use safe text
-		        $"Buy Pressure:\t{buyPressText}\n" +   // Use safe text
-		        $"Sell Pressure:\t{sellPressText}\n" +  // Use safe text
-				$"ATR:\t\t{currentAtr:F2}\n" +
-		        $"-------------\n" +
-		        $"Trend:\t{trendStatus}\n" +      // Use overridden status
-		        $"Signal:\t{signalStatus}";       // Use overridden status
+            string momoStatus = currentMomentum > 0 ? $"Up ({currentMomentum:F1})" : currentMomentum < 0 ? $"Down ({currentMomentum:F1})" : $"Neutral ({currentMomentum:F1})";
+            string buyPressText = buyPressure > sellPressure ? $"Up ({buyPressure:F1})" : $"Down ({buyPressure:F1})";
+            string sellPressText = sellPressure > buyPressure ? $"Up ({sellPressure:F1})" : $"Down ({sellPressure:F1})";
+            string atrText = currentAtr.ToString("F2");
 
-		    SimpleFont font = new SimpleFont("Arial", 16);
-		    Brush pnlColor = accountTotal == 0 ? Brushes.Cyan : accountTotal > 0 ? Brushes.Lime : Brushes.Pink;
-		
-		    try
-		    {
-		        // Ensure ChartControl and other UI elements are available before drawing
-		        //if (chartControl != null)
-		        //{
-		        Draw.TextFixed(this, "realTimeTradeText", realTimeTradeText, PositionDailyPNL, pnlColor, font, Brushes.Transparent, Brushes.Transparent, 0);
-		        //}
-		    }
-		    catch (Exception ex) { Print($"Error drawing PNL display: {ex.Message}"); }
-		}
-		
+
+            // --- Format Display String ---
+            // Corrected PnL Source check
+            string pnlSource = (State == State.Realtime) ? "Account" : "System";
+            // Use null conditional for connection info
+            string connectionStatus = Account?.Connection?.Status.ToString() ?? "N/A";
+            string connectionName = Account?.Connection?.Options?.Name ?? "N/A";
+
+
+            string realTimeTradeText =
+                $"{Account.Name} | {connectionName} ({connectionStatus})\n" + // Safer access
+                $"PnL Src: {pnlSource}\n" +
+                $"Real PnL:\t{accountRealized:C}\n" +
+                $"Unreal PnL:\t{accountUnrealized:C}\n" +
+                $"Total PnL:\t{accountTotal:C}\n" +
+                $"Daily PnL:\t{dailyPnL:C}\n" +
+                $"-------------\n" +
+                $"Max Profit:\t{(maxProfit == double.MinValue ? "N/A" : maxProfit.ToString("C"))}\n" +
+                $"Max Drawdown:\t{TrailingDrawdown:C}\n" +
+                $"Current DD:\t{currentDrawdown:C}\n" +
+                $"Remaining DD:\t{remainingDrawdown:C}\n" +
+                $"-------------\n" +
+                $"ADX:\t\t{adxStatus}\n" +
+                $"Momentum:\t{momoStatus}\n" +
+                $"Buy Pressure:\t{buyPressText}\n" +
+                $"Sell Pressure:\t{sellPressText}\n" +
+                $"ATR:\t\t{atrText}\n" +
+                $"-------------\n" +
+                $"Trend:\t{trendStatus}\n" +
+                $"Signal:\t{signalStatus}";
+
+             // ... (Font, Color, and Draw.TextFixed logic remains the same) ...
+              SimpleFont font = new SimpleFont("Arial", FontSize);
+              Brush pnlColor = accountTotal == 0 ? Brushes.Cyan : accountTotal > 0 ? Brushes.Lime : Brushes.Pink;
+              if (signalStatus == "Drawdown Limit Hit" || signalStatus == "Loss Limit Hit" || signalStatus == "Order Error!") pnlColor = Brushes.Red;
+              else if (signalStatus == "Profit Limit Hit") pnlColor = Brushes.Lime;
+
+              try { Draw.TextFixed(this, "realTimeTradeText", realTimeTradeText, PositionDailyPNL, pnlColor, font, Brushes.Transparent, Brushes.Transparent, 0); }
+              catch (Exception ex) { Print($"Error drawing PNL display: {ex.Message}"); }
+        }
+				
 		#region KillSwitch
-		protected void KillSwitch()
-		{
-		    totalPnL = SystemPerformance.RealTimeTrades.TradesPerformance.Currency.CumProfit;
-		    dailyPnL = totalPnL + Account.Get(AccountItem.UnrealizedProfitLoss, Currency.UsDollar);
-		
-		    // Track the Highest Profit Achieved
-		    if (totalPnL > maxProfit)
-		    {
-		        maxProfit = totalPnL;
-		    }
-		
-		    // Determine all relevant order labels
-		    List<string> longOrderLabels = new List<string> { LE, QLE }; // Base Labels for Longs
-		    List<string> shortOrderLabels = new List<string> { SE, QSE }; // Base Labels for Shorts
-		
-		    if (EnableProfitTarget2)
-		    {
-		        longOrderLabels.AddRange(new[] { LE2, "QLE2" });
-		        shortOrderLabels.AddRange(new[] { SE2, "QSE2" });
-		    }
+		// In KillSwitch (Corrected PnL and Drawdown Check)
+        protected void KillSwitch()
+        {
+            // --- Calculate Current TOTAL PnL ---
+            double currentRealized = 0;
+            double currentUnrealized = 0;
+            double currentTotalPnL = 0;
 
-		    if (EnableProfitTarget3)
-		    {
-		        longOrderLabels.AddRange(new[] { LE3, "QLE3" });
-		        shortOrderLabels.AddRange(new[] { SE3, "QSE3" });
-		    }
-		
-		    if (EnableProfitTarget4)
-		    {
-		        longOrderLabels.AddRange(new[] { LE4, "QLE4" });
-		        shortOrderLabels.AddRange(new[] { SE4, "QSE4" });
-		    }
-		
-		    // Common Action: Close all Positions and Disable the Strategy
-		    Action closeAllPositionsAndDisableStrategy = () =>
-		    {
-		        foreach (string label in longOrderLabels)
-		        {
-		            ExitLong(Convert.ToInt32(Position.Quantity), @"LongExitKillSwitch", label);
-		        }
-		
-		        foreach (string label in shortOrderLabels)
-		        {
-		            ExitShort(Convert.ToInt32(Position.Quantity), @"ShortExitKillSwitch", label);
-		        }
-		
-		        isAutoEnabled = false;
-		        Print("Kill Switch Activated: Strategy Disabled!");
-		    };
+            // Use Account PnL in Realtime if connected
+            if (State == State.Realtime && Account.Connection != null && Account.Connection.Status == ConnectionStatus.Connected)
+            {
+                currentRealized = Account.Get(AccountItem.RealizedProfitLoss, Currency.UsDollar);
+                currentUnrealized = Account.Get(AccountItem.UnrealizedProfitLoss, Currency.UsDollar);
+            }
+            // Use SystemPerformance otherwise (Backtest/Historical/Optimization)
+            // Corrected State Check: Removed State.Optimization
+            else if (State == State.Historical)
+            {
+                currentRealized = SystemPerformance.AllTrades.TradesPerformance.Currency.CumProfit;
+                currentUnrealized = (Position != null && Position.MarketPosition != MarketPosition.Flat)
+                                    ? Position.GetUnrealizedProfitLoss(PerformanceUnit.Currency, Close[0])
+                                    : 0;
+            }
+            currentTotalPnL = currentRealized + currentUnrealized;
 
-		    if (dailyLossProfit && enableTrailingDrawdown) //Check both the enableDailyLossLimit and enableTrailingDrawdown
-		    {
-		        if (totalPnL >= StartTrailingDD && (maxProfit - totalPnL) >= TrailingDrawdown)
-		        {
-		            closeAllPositionsAndDisableStrategy();
-		            trailingDrawdownReached = true;
-		        }
-		    }
-		
-		    if (dailyPnL <= -DailyLossLimit)
-		    {
-		        closeAllPositionsAndDisableStrategy();
-		    }
-		
-		    if (dailyPnL >= DailyProfitLimit)
-		    {
-		        closeAllPositionsAndDisableStrategy();
-		    }
-		
-			if (!isAutoEnabled)
-				Print("Kill Switch Activated!!!");
-		}
+            // ... (Rest of KillSwitch remains the same as the previous correct version) ...
+
+            // --- Update Max Profit ---
+            if (maxProfit == double.MinValue && currentTotalPnL > double.MinValue) maxProfit = currentTotalPnL;
+            else if (currentTotalPnL > maxProfit) maxProfit = currentTotalPnL;
+
+            // --- Calculate Daily PnL for limit checks ---
+            dailyPnL = currentTotalPnL - cumPnL;
+
+            // --- Determine relevant order labels ---
+            // (Keep label logic from previous correct version)
+            List<string> longOrderLabels = new List<string> { LE, QLE };
+            List<string> shortOrderLabels = new List<string> { SE, QSE };
+            if (EnableProfitTarget2) { longOrderLabels.AddRange(new[] { LE2, "QLE2" }); shortOrderLabels.AddRange(new[] { SE2, "QSE2" }); }
+            if (EnableProfitTarget3) { longOrderLabels.AddRange(new[] { LE3, "QLE3" }); shortOrderLabels.AddRange(new[] { SE3, "QSE3" }); }
+            if (EnableProfitTarget4) { longOrderLabels.AddRange(new[] { LE4, "QLE4" }); shortOrderLabels.AddRange(new[] { SE4, "QSE4" }); }
+
+
+            // --- Check Conditions ---
+            bool shouldDisable = false;
+            string disableReason = "";
+            double currentDrawdownFromPeak = Math.Max(0, maxProfit - currentTotalPnL); // Calculate here for checks
+
+            if (enableTrailingDrawdown && currentTotalPnL >= StartTrailingDD && currentDrawdownFromPeak >= TrailingDrawdown)
+            {
+                shouldDisable = true;
+                disableReason = $"Trailing Drawdown ({currentDrawdownFromPeak:C} >= {TrailingDrawdown:C})";
+                trailingDrawdownReached = true;
+            }
+            if (dailyLossProfit && dailyPnL <= -DailyLossLimit)
+            {
+                shouldDisable = true;
+                disableReason = $"Daily Loss Limit ({dailyPnL:C} <= {-DailyLossLimit:C})";
+            }
+            if (dailyLossProfit && dailyPnL >= DailyProfitLimit)
+            {
+                shouldDisable = true;
+                disableReason = $"Daily Profit Limit ({dailyPnL:C} >= {DailyProfitLimit:C})";
+            }
+
+            // --- Action: Close all Positions and Disable ---
+            if (shouldDisable && isAutoEnabled)
+            {
+                Print($"Kill Switch Activated: {disableReason} at {Time[0]}. Flattening position and disabling AUTO trading.");
+
+                 // Flatten position safely
+                if (Position.MarketPosition == MarketPosition.Long && Position.Quantity > 0) { ExitLong(Position.Quantity, "LongExitKillSwitch", ""); }
+                else if (Position.MarketPosition == MarketPosition.Short && Position.Quantity > 0) { ExitShort(Position.Quantity, "ShortExitKillSwitch", ""); }
+                else if (Position.MarketPosition != MarketPosition.Flat) { FlattenAllPositions(); Print("Used FlattenAllPositions() as a fallback in KillSwitch."); }
+
+                isAutoEnabled = false;
+                // Update button UI
+                ChartControl?.Dispatcher.InvokeAsync(() => {
+                    DecorateButton(autoBtn, false ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Auto On", "\uD83D\uDD13 Auto Off");
+                    DecorateButton(manualBtn, !false ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Manual On", "\uD83D\uDD13 Manual Off");
+                });
+            }
+        }
 		#endregion
 		
 		#region Custom Property Manipulation	
@@ -4284,6 +4177,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		
 		#region 01b. Support Developer
 		
+		[ReadOnly(true)]
 		[NinjaScriptProperty]
 		[Display(Name = "PayPal Donation URL", Order = 1, GroupName = "01b. Support Developer", Description = "https://www.paypal.com/signin")]
 		public string paypal { get; set; }
@@ -4579,7 +4473,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		public bool enableBackgroundSignal
 		{ get; set; }
 		
-		// New 04/18/2025
         [NinjaScriptProperty]
 		[Range(0, 360)]
 		[Display(Name = "Background Opacity", Description = "Background Opacity", Order = 10, GroupName = "03. Order Management")]
@@ -4865,7 +4758,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
 		[Display(Name="Regression Channel Look Back Period", Description="Period for Regression Channel used in chop detection.", Order=2, GroupName="09. Market Condition")]
-		public int SlopeLookBack { get; set; }
+		public int SlopeLookback { get; set; }
 		
 		[NinjaScriptProperty]
 		[Range(0.1, 1.0)] // Factor less than 1 to indicate narrower than average
@@ -5016,6 +4909,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		public TextPosition PositionDailyPNL
 		{ get; set; }
 		
+		[NinjaScriptProperty]
+		[Display(Name = "Font Size", Order = 4, GroupName = "11. Status Panel")]
+		public int FontSize { get; set; }
+	
 		// Serialize our Color object
 		[Browsable(false)]
 		public string colorDailyProfitLossSerialize
@@ -5025,16 +4922,16 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		}
 		
         [NinjaScriptProperty]
-        [Display(Name = "Show STATUS PANEL", Order = 4, GroupName = "11. Status Panel")]
+        [Display(Name = "Show STATUS PANEL", Order = 5, GroupName = "11. Status Panel")]
         public bool showPnl { get; set; }		
 
 		[XmlIgnore()]
-		[Display(Name = "STATUS PANEL Color", Order = 5, GroupName = "11. Status Panel")]
+		[Display(Name = "STATUS PANEL Color", Order = 6, GroupName = "11. Status Panel")]
 		public Brush colorPnl
 		{ get; set; }				
 		
 		[NinjaScriptProperty]
-		[Display(Name="STATUS PANEL Position", Description = "Status PNL Position", Order = 6, GroupName = "11. Status Panel")]
+		[Display(Name="STATUS PANEL Position", Description = "Status PNL Position", Order = 7, GroupName = "11. Status Panel")]
 		public TextPosition PositionPnl		
 		{ get; set; }	
 		
@@ -5047,7 +4944,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		}
 		
 		[NinjaScriptProperty]
-		[Display(Name="Show Historical Trades", Description = "Show Historical Teorical Trades", Order= 7, GroupName="11. Status Panel")]
+		[Display(Name="Show Historical Trades", Description = "Show Historical Teorical Trades", Order= 8, GroupName="11. Status Panel")]
 		public bool ShowHistorical
 		{ get; set; }
 		
