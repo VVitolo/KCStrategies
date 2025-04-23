@@ -282,9 +282,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             {
 				Description									= @"Base Strategy with OEB v.5.0.2 TradeSaber(Dre). and ArchReactor for KC (Khanh Nguyen)";
 				Name										= "KCAlgoBase";
-				BaseAlgoVersion								= "KCAlgoBase v5.4";
+				BaseAlgoVersion								= "KCAlgoBase v.5.4.0.1 dev";
 				Author										= "indiVGA, Khanh Nguyen, Oshi, based on ArchReactor";
-				Version										= "Version 5.4 Apr. 2025";
+				Version										= "Versionv.5.4.0.1 dev, Apr. 2025";
 				Credits										= "";
 				StrategyName 								= "";
 				ChartType									= "Orenko 34-40-40";	
@@ -326,18 +326,18 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		        marketIsChoppy          		= false;
 		        autoDisabledByChop      		= false;
 				enableBackgroundSignal			= true;
-				Opacity							= 32;       // Byte: 255 opaque
+				Opacity							= 50;       // Byte: 255 opaque
 				
 				enableBuySellPressure 			= true;
 				showBuySellPressure 			= false;
 				
-				HmaPeriod 						= 14;
+				HmaPeriod 						= 16;
 				enableHmaHooks 					= true;
 				showHmaHooks 					= true;
 	
 				RegChanPeriod 					= 40;
-				RegChanWidth 					= 4;
-				RegChanWidth2 					= 3;
+				RegChanWidth 					= 4.5;
+				RegChanWidth2 					= 3.5;
 				enableRegChan1 					= true;
 				enableRegChan2 					= true;
 				showRegChan1 					= true;
@@ -375,7 +375,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				TickMove						= 4;								
 						
                 MinRegChanTargetDistanceTicks = 60; // Example: Require at least 40 ticks for target
-                MinRegChanStopDistanceTicks   = 120; // Example: Require at least 80 ticks distance for stop
+                MinRegChanStopDistanceTicks   = 100; // Example: Require at least 100 ticks distance for stop
 				
 				EnableFixedProfitTarget			= true; // Default
                 EnableRegChanProfitTarget       = false; 
@@ -789,8 +789,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
             // --- Define Trend Conditions ---
             // Combine flags calculated above. Ensure flags default reasonably if indicators aren't ready.
-            uptrend = adxUp && momoUp && buyPressureUp && hmaUp && volMaUp && regChanUp && atrUp && aboveEMAHigh;
-            downtrend = adxUp && momoDown && sellPressureUp && hmaDown && volMaDown && regChanDown && atrUp && belowEMALow;
+            uptrend = choppyDown && adxUp && momoUp && buyPressureUp && hmaUp && volMaUp && regChanUp && atrUp && aboveEMAHigh;
+            downtrend = choppyDown && adxUp && momoDown && sellPressureUp && hmaDown && volMaDown && regChanDown && atrUp && belowEMALow;
 
             // --- Update PnL Display Position Based on Trend ---
             // (Consider if this is really needed or if fixed positions are better)
@@ -1158,7 +1158,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
             // --- Check for Override Condition ---
             bool useRegChanOverride = (TrailStopType == TrailStopTypeKC.Regression_Channel_Trail && EnableRegChanProfitTarget);
-            int effectiveInitialStopTicks = useRegChanOverride ? 120 : InitialStop; // Use 120 if override is active
+            int effectiveInitialStopTicks = useRegChanOverride ? 100 : InitialStop; // Use 120 if override is active
 
             if (useRegChanOverride)
                  PrintOnce($"SetStopLosses_OverrideStop_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: RegChan Trail & Target active. Using OVERRIDE InitialStop = {effectiveInitialStopTicks} ticks.");
@@ -1189,8 +1189,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                  return;
             }
 
-            // --- Apply Stop to Primary Label using Explicit Exit Orders ---
-            SetFixedStopLoss(entryOrderLabel, CalculationMode.Price, initialStopPrice, false);
+            // --- Apply Stop to Primary Label using Explicit Exit Orders 
+			SetTrailingStop(entryOrderLabel, CalculationMode.Ticks, initialStopPrice / TickSize, true);
+//            SetFixedStopLoss(entryOrderLabel, CalculationMode.Price, initialStopPrice, false);
              string modeInfo = enableTrail ? "(Intended for Trail)" : "(Fixed)";
              PrintOnce($"SetStopLosses_Apply_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: Applied initial stop using Exit...StopMarket(Price: {initialStopPrice:F5}) {modeInfo} for label {entryOrderLabel}.");
 
@@ -1230,7 +1231,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                         try
                         {
                             // ALWAYS use SetFixedStopLoss (Exit...StopMarket) for initial placement
-                            SetFixedStopLoss(lbl, CalculationMode.Price, initialStopPrice, false);
+//                            SetFixedStopLoss(lbl, CalculationMode.Price, initialStopPrice, false);
+							SetTrailingStop(lbl, CalculationMode.Ticks, initialStopPrice / TickSize, true);
                         }
                         catch(Exception ex)
                         {
@@ -1248,7 +1250,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
 		#endregion
 
-        // ***** MODIFIED SECTION *****
 		#region Stop Loss Management
 
         // The SetFixedStopLoss helper (using Exit...StopMarket) remains unchanged from the previous version
@@ -1262,7 +1263,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
 		    if (tickTrail)
 		    {
-		        calculatedTrailStopTicks = trailStop;
+		        calculatedTrailStopTicks = InitialStop;
 		        // Print($"[DEBUG Tick Trail] Using InitialStop: {calculatedTrailStopTicks}"); // Reduced logging
 		    }
 		    else if (threeStepTrail)
@@ -1359,7 +1360,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                     if (distanceTicks < MinRegChanStopDistanceTicks) useFallbackStop = true; // Fallback check
 
                     // ***** MODIFIED: Apply override to fallback value *****
-                    int effectiveInitialStopTicks = useRegChanOverride ? 120 : InitialStop; // Use 120 if override active
+                    int effectiveInitialStopTicks = useRegChanOverride ? 100 : InitialStop; // Use 120 if override active
 
                     if (useFallbackStop) {
                         trailValue = effectiveInitialStopTicks; // Use the effective fallback value
@@ -1394,7 +1395,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		}
 
 		#endregion
-        // ***** END OF MODIFIED SECTION *****
 		
 		#region Helper Methods
 
@@ -3518,24 +3518,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		
 		#endregion				
 		
-		#region DrawPnl
-		protected void ShowPNLStatus() {
-			textLine0 = "Active Timer";
-			textLine1 = GetActiveTimer();
-			textLine2 = "Long Per Direction";
-			textLine3 = $"{counterLong} / {longPerDirection} | " + (TradesPerDirection ? "On" : "Off");
-			textLine4 = "Short Per Direction";
-			textLine5 = $"{counterShort} / {shortPerDirection} | " + (TradesPerDirection ? "On" : "Off");
-			textLine6 = "Bars Since Exit ";
-			textLine7 = $"{iBarsSinceExit}    |    " + (iBarsSinceExit > 1 ?  "On" : "Off");
-			string statusPnlText = textLine0 + "\t" + textLine1 + "\n" + textLine2 + "  " + textLine3 + "\n" + textLine4 + "  " + textLine5+ "\n" + textLine6 + "\t";
-			SimpleFont font = new SimpleFont("Arial", FontSize);
-			
-			Draw.TextFixed(this, "statusPnl", statusPnlText, PositionPnl, colorPnl, font, Brushes.Transparent, Brushes.Transparent, 0);
-								
-		}
-		#endregion			
-		
 		#region Discord Signal
 		private async Task SendSignalToDiscordAsync(string direction, double entryPrice, double stopLoss, double profitTarget, DateTime entryTime)
 		{
@@ -3691,6 +3673,24 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		}
 		
 		#endregion	
+		
+		#region DrawPnl
+		protected void ShowPNLStatus() {
+			textLine0 = "Active Timer";
+			textLine1 = GetActiveTimer();
+			textLine2 = "Long Per Direction";
+			textLine3 = $"{counterLong} / {longPerDirection} | " + (TradesPerDirection ? "On" : "Off");
+			textLine4 = "Short Per Direction";
+			textLine5 = $"{counterShort} / {shortPerDirection} | " + (TradesPerDirection ? "On" : "Off");
+			textLine6 = "Bars Since Exit ";
+			textLine7 = $"{iBarsSinceExit}    |    " + (iBarsSinceExit > 1 ?  "On" : "Off");
+			string statusPnlText = textLine0 + "\t" + textLine1 + "\n" + textLine2 + "  " + textLine3 + "\n" + textLine4 + "  " + textLine5+ "\n" + textLine6 + "\t";
+			SimpleFont font = new SimpleFont("Arial", FontSize);
+			
+			Draw.TextFixed(this, "statusPnl", statusPnlText, PositionPnl, colorPnl, font, Brushes.Transparent, Brushes.Transparent, 0);
+								
+		}
+		#endregion			
 		
 		// In DrawStrategyPnL (Corrected Drawdown and Max Profit)
 		protected void DrawStrategyPnL()

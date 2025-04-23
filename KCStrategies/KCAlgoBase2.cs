@@ -38,6 +38,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		
         // Dictionary to track messages printed by PrintOnce (Key = message key, Value = bar number printed)
         private Dictionary<string, int> printedMessages = new Dictionary<string, int>();
+		
 		private bool marketIsChoppy;
 		private bool autoDisabledByChop; // Tracks if Auto was turned off by the system due to chop
 
@@ -81,9 +82,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		private int choppyThreshold = 50;
 		public bool choppyDown;
         public bool choppyUp;		
-
-//        private bool aboveEMAHigh;
-//        private bool belowEMALow;
 
         private bool uptrend;
         private bool downtrend;
@@ -281,9 +279,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             {
 				Description									= @"Base Strategy with OEB v.5.0.2 TradeSaber(Dre). and ArchReactor for KC (Khanh Nguyen)";
 				Name										= "KCAlgoBase2";
-				BaseAlgoVersion								= "KCAlgoBase2 v.5.4";
+				BaseAlgoVersion								= "KCAlgoBase2 v.5.4.0.1 dev";
 				Author										= "indiVGA, Khanh Nguyen, Oshi, based on ArchReactor";
-				Version										= "Version 5.4 Apr. 2025";
+				Version										= "Version v.5.4.0.1 dev, Apr. 2025";
 				Credits										= "";
 				StrategyName 								= "";
 				ChartType									= "Orenko 34-40-40";	
@@ -335,20 +333,20 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 //				showHmaHooks 					= true;
 	
 				RegChanPeriod 					= 40;
-				RegChanWidth 					= 4;
-				RegChanWidth2 					= 3;
-				enableRegChan1 					= true;
-				enableRegChan2 					= true;
-				showRegChan1 					= true;
-				showRegChan2 					= true;
-				showRegChanHiLo 				= true;
+				RegChanWidth 					= 5;
+				RegChanWidth2 					= 4;
+				enableRegChan1 					= false;
+				enableRegChan2 					= false;
+				showRegChan1 					= false;
+				showRegChan2 					= false;
+				showRegChanHiLo 				= false;
 
 //				enableVMA						= true;
 //				showVMA							= true;
 				
 				MomoUp							= 1;
 				MomoDown						= -1;
-				enableMomo						= true;
+				enableMomo						= false;
 				showMomo						= false;
 				
 				adxPeriod						= 7;
@@ -357,10 +355,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				adxExitThreshold				= 45;
 				enableADX						= true;
 				showAdx							= false;
-				
-//				emaLength						= 110;
-//				enableEMAFilter 				= false;
-//				showEMA							= false;
 				
 				AtrPeriod						= 14;
 				atrThreshold					= 1.5;
@@ -374,7 +368,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				TickMove						= 4;								
 						
                 MinRegChanTargetDistanceTicks = 60; // Example: Require at least 40 ticks for target
-                MinRegChanStopDistanceTicks   = 120; // Example: Require at least 80 ticks distance for stop
+                MinRegChanStopDistanceTicks   = 100; // Example: Require at least 80 ticks distance for stop
 				
 				EnableFixedProfitTarget			= true; // Default
                 EnableRegChanProfitTarget       = false; 
@@ -546,12 +540,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				pivots.Plots[0].Width = 4;
 				if (showPivots) AddChartIndicator(pivots);
 				
-//				if(showEMA) 
-//				{
-//					AddChartIndicator(EMA(High, emaLength));
-//					AddChartIndicator(EMA(Low, emaLength));
-//				}
-					
 				if (additionalContractExists)
 			    {
 			        string quickProfitTargetLabel = isLong ? QLE : QSE;  // QLE = Quick Long Entry, QSE = Quick Short Entry
@@ -611,9 +599,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
             // Skip historical processing if ShowHistorical is false (except in Realtime)
             if (!ShowHistorical && State != State.Realtime) return;
-
-            // --- Initialize/Reset Variables ---
-            // trailStop = InitialStop; // Removed: Stop logic now handles initial setting/trailing dynamically
 
             // --- Session Start Initialization ---
             if (Bars.IsFirstBarOfSession)
@@ -714,15 +699,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                   momoUp = !enableMomo; momoDown = !enableMomo;
              }
 
-            // EMA Filter (ensure EMA has enough data)
-//            if (CurrentBar >= emaLength - 1)
-//            {
-//                 aboveEMAHigh = !enableEMAFilter || Open[1] > EMA(High, emaLength)[1];
-//                 belowEMALow = !enableEMAFilter || Open[1] < EMA(Low, emaLength)[1];
-//            } else {
-//                 aboveEMAHigh = !enableEMAFilter; belowEMALow = !enableEMAFilter; // Default if not ready
-//            }
-
             // Price Action
             priceUp = Close[0] > Close[1] && Close[0] > Open[0];
             priceDown = Close[0] < Close[1] && Close[0] < Open[0];
@@ -791,8 +767,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
             // --- Define Trend Conditions ---
             // Combine flags calculated above. Ensure flags default reasonably if indicators aren't ready.
-            uptrend = adxUp && momoUp && buyPressureUp && atrUp;
-            downtrend = adxUp && momoDown && sellPressureUp && atrUp;
+            uptrend = adxUp && buyPressureUp && atrUp;
+            downtrend = adxUp && sellPressureUp && atrUp;
 
             // --- Update PnL Display Position Based on Trend ---
             // (Consider if this is really needed or if fixed positions are better)
@@ -1160,7 +1136,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
             // --- Check for Override Condition ---
             bool useRegChanOverride = (TrailStopType == TrailStopTypeKC.Regression_Channel_Trail && EnableRegChanProfitTarget);
-            int effectiveInitialStopTicks = useRegChanOverride ? 120 : InitialStop; // Use 120 if override is active
+            int effectiveInitialStopTicks = useRegChanOverride ? 100 : InitialStop; // Use 120 if override is active
 
             if (useRegChanOverride)
                  PrintOnce($"SetStopLosses_OverrideStop_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: RegChan Trail & Target active. Using OVERRIDE InitialStop = {effectiveInitialStopTicks} ticks.");
@@ -1191,8 +1167,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                  return;
             }
 
-            // --- Apply Stop to Primary Label using Explicit Exit Orders ---
-            SetFixedStopLoss(entryOrderLabel, CalculationMode.Price, initialStopPrice, false);
+            // --- Apply Stop to Primary Label using Explicit Exit Orders 
+			SetTrailingStop(entryOrderLabel, CalculationMode.Ticks, initialStopPrice / TickSize, true);
+//            SetFixedStopLoss(entryOrderLabel, CalculationMode.Price, initialStopPrice, false);
              string modeInfo = enableTrail ? "(Intended for Trail)" : "(Fixed)";
              PrintOnce($"SetStopLosses_Apply_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: Applied initial stop using Exit...StopMarket(Price: {initialStopPrice:F5}) {modeInfo} for label {entryOrderLabel}.");
 
@@ -1232,7 +1209,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                         try
                         {
                             // ALWAYS use SetFixedStopLoss (Exit...StopMarket) for initial placement
-                            SetFixedStopLoss(lbl, CalculationMode.Price, initialStopPrice, false);
+//                            SetFixedStopLoss(lbl, CalculationMode.Price, initialStopPrice, false);
+							SetTrailingStop(lbl, CalculationMode.Ticks, initialStopPrice / TickSize, true);
                         }
                         catch(Exception ex)
                         {
@@ -1264,7 +1242,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
 		    if (tickTrail)
 		    {
-		        calculatedTrailStopTicks = trailStop;
+		        calculatedTrailStopTicks = InitialStop;
 		        // Print($"[DEBUG Tick Trail] Using InitialStop: {calculatedTrailStopTicks}"); // Reduced logging
 		    }
 		    else if (threeStepTrail)
@@ -1351,8 +1329,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                     double targetStopPrice = 0;
                     string targetBandName = "";
                     bool useFallbackStop = false;
-                    if (Position.MarketPosition == MarketPosition.Long) { targetStopPrice = RegressionChannel1.Lower[0]; targetBandName = "Lower"; }
-                    else if (Position.MarketPosition == MarketPosition.Short) { targetStopPrice = RegressionChannel1.Upper[0]; targetBandName = "Upper"; }
+                    if (Position.MarketPosition == MarketPosition.Long) { targetStopPrice = RegressionChannelHighLow1.Lower[0]; targetBandName = "Lower"; }
+                    else if (Position.MarketPosition == MarketPosition.Short) { targetStopPrice = RegressionChannelHighLow1.Upper[0]; targetBandName = "Upper"; }
                     else return;
 
                     double currentMarketPrice = Close[0];
@@ -1361,7 +1339,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                     if (distanceTicks < MinRegChanStopDistanceTicks) useFallbackStop = true; // Fallback check
 
                     // ***** MODIFIED: Apply override to fallback value *****
-                    int effectiveInitialStopTicks = useRegChanOverride ? 120 : InitialStop; // Use 120 if override active
+                    int effectiveInitialStopTicks = useRegChanOverride ? 100 : InitialStop; // Use 120 if override active
 
                     if (useFallbackStop) {
                         trailValue = effectiveInitialStopTicks; // Use the effective fallback value
@@ -3695,7 +3673,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		#endregion	
 		
 		// In DrawStrategyPnL (Corrected Drawdown and Max Profit)
-		        protected void DrawStrategyPnL()
+		protected void DrawStrategyPnL()
         {
             // ... (Account connection check remains the same) ...
 
@@ -4729,19 +4707,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		[NinjaScriptProperty]
         [Display(Name="Volatility Threshold", Order = 27, GroupName="08b. Default Settings")]
         public double atrThreshold { get; set; }		
-		
-//		[NinjaScriptProperty]
-//        [Display(Name = "Enable EMA Filter", Order = 28, GroupName = "08b. Default Settings")]
-//        public bool enableEMAFilter { get; set; }
-		
-//		[NinjaScriptProperty]
-//        [Display(Name = "Show EMA", Order = 29, GroupName = "08b. Default Settings")]
-//        public bool showEMA { get; set; }
-		
-//		[NinjaScriptProperty]
-//		[Display(Name="EMA Length", Order = 30, GroupName="08b. Default Settings")]
-//		public int emaLength
-//		{ get; set; }
 		
 		[NinjaScriptProperty]
         [Display(Name = "Show Pivots", Order = 31, GroupName = "08b. Default Settings")]
