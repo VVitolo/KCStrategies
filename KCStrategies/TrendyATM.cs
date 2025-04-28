@@ -48,7 +48,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 StrategyName = "Trendy ATM";
                 Version = "5.2 Apr. 2025";
                 Credits = "Strategy by Khanh Nguyen";
-                ChartType =  "Orenko 34-40-40";
+                ChartType =  "Tbars 20";
 
                 // T3 Trend Filter settings
                 Factor = 0.5;

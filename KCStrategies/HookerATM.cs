@@ -47,11 +47,12 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 StrategyName = "Hooker ATM";
                 Version = "5.2 Apr. 2025";
                 Credits = "Strategy by Heldani and Khanh Nguyen";
-                ChartType =  "Orenko 34-40-40";					
+                ChartType =  "Tbars 20";				
 				
 				HmaPeriod 						= 16;
 				enableHmaHooks 					= true;
 				showHmaHooks 					= true;
+				showMomo						= false;
 	
             }
             else if (State == State.DataLoaded)

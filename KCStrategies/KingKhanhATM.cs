@@ -29,6 +29,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
     {
        	private RegressionChannel RegressionChannel1, RegressionChannel2;
 		private RegressionChannelHighLow RegressionChannelHighLow1;		
+				
+		private double highestHigh;
+		private double lowestLow;
 		
 		public override string DisplayName { get { return Name; } }
 		
@@ -43,11 +46,12 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 StrategyName = "KingKhanh ATM";
                 Version = "5.2 Apr. 2025";
                 Credits = "Strategy by Khanh Nguyen";
-                ChartType = "Orenko 34-40-40";		
+                ChartType = "Tbars 20";		
 
 				RegChanPeriod		= 40;
-				RegChanWidth		= 4;
-				RegChanWidth2		= 3;						
+				RegChanWidth		= 5;
+				RegChanWidth2		= 4;
+				showMomo			= false;					
             }
             else if (State == State.DataLoaded)
             {
@@ -78,7 +82,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				 || ((RegressionChannel1.Middle[0] < RegressionChannel1.Middle[1])  && (High[0] < High[2]) && (High[2] >= RegressionChannel1.Upper[2]))
 			
 				 // Condition group 3
-				 || (High[0] < RegressionChannelHighLow1.Upper[2])); 
+				 || (High[0] < RegressionChannelHighLow1.Upper[2]));  
 			
 			base.OnBarUpdate();
         }
@@ -97,16 +101,16 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             else return false;
         }
 
-       	protected override bool ValidateExitLong()
+       		protected override bool ValidateExitLong()
         {
-            // Logic for validating long exits
-            return false;
+            if (exitLong) return true;
+            else return false;
         }
 
         protected override bool ValidateExitShort()
         {
-			// Logic for validating short exits
-			return false;
+			if (exitShort) return true;
+			else return false;
         }
 
         #region Indicators
@@ -119,6 +123,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			AddChartIndicator(RegressionChannel2);
 			
 			RegressionChannelHighLow1	= RegressionChannelHighLow(Close, RegChanPeriod, RegChanWidth);	
+			RegressionChannelHighLow1.Plots[0].Width = 2;
+			RegressionChannelHighLow1.Plots[1].Width = 2;
+			RegressionChannelHighLow1.Plots[2].Width = 2;	
 			AddChartIndicator(RegressionChannelHighLow1);	
         }
         #endregion
@@ -126,6 +133,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
 		#region Properties - Strategy Settings
 	
+		[NinjaScriptProperty]
+		[Display(Name="Tick Distance from High / Low Lines", Order=2, GroupName="02. Order Settings")]
+		public int TickDistance
+		{ get; set; }
+
 		[NinjaScriptProperty]
 		[Display(Name="Regression Channel Period", Order=1, GroupName="08a. Strategy Settings")]
 		public int RegChanPeriod

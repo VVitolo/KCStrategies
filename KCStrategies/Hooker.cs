@@ -53,10 +53,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 StrategyName = "Hooker";
                 Version = "5.2 Apr. 2025";
                 Credits = "Strategy by Heldani and Khanh Nguyen";
-                ChartType = "Orenko 34-40-40";		
+                ChartType = "Tbars 20";		
 				
 				HmaPeriod		= 16;
-				
+				showMomo		= false;
 				RegChanPeriod	= 40;
 				RegChanWidth	= 4;
 				RegChanWidth2	= 3;				

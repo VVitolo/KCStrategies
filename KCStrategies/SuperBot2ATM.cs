@@ -59,6 +59,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		private bool trendyUp;
 		private bool trendyDown;
 
+		private double highestHigh;
+		private double lowestLow;
+		
 		public override string DisplayName { get { return Name; } }
 		
         protected override void OnStateChange()
@@ -72,8 +75,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 StrategyName = "SuperBot2 ATM";
                 Version = "5.2 Apr. 2025";
                 Credits = "Strategy by Khanh Nguyen";
-                ChartType =  "Orenko 34-40-40";
-					
+                ChartType =  "Tbars 20";
+				
 				HmaPeriod			= 16;
 				enableHmaHooks		= true;
 				showHmaHooks		= true;
@@ -185,14 +188,14 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
        	protected override bool ValidateExitLong()
         {
-            // Logic for validating long exits
-            return false;
+            if (exitLong) return true;
+            else return false;
         }
 
         protected override bool ValidateExitShort()
         {
-			// Logic for validating short exits
-			return false;
+			if (exitShort) return true;
+            else return false;
         }
 
         #region Indicators
@@ -205,6 +208,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			if (showRegChan2) AddChartIndicator(RegressionChannel2);
 			
 			RegressionChannelHighLow1	= RegressionChannelHighLow(Close, RegChanPeriod, RegChanWidth);	
+			RegressionChannelHighLow1.Plots[0].Width = 2;
+			RegressionChannelHighLow1.Plots[1].Width = 2;
+			RegressionChannelHighLow1.Plots[2].Width = 2;
 			if (showRegChanHiLo) AddChartIndicator(RegressionChannelHighLow1);
 				
             LinReg1 	= LinReg2(Close, LinRegPeriod);
@@ -239,6 +245,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
 		#region Properties - Strategy Settings
 	
+		[NinjaScriptProperty]
+		[Display(Name="Tick Distance from High / Low Lines", Order=2, GroupName="02. Order Settings")]
+		public int TickDistance
+		{ get; set; }
+
 		[NinjaScriptProperty]
         [Display(Name = "Enable Momo", Order = 12, GroupName = "08a. Strategy Settings")]
         public bool enableMomo { get; set; }

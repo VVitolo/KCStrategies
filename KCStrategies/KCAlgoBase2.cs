@@ -32,44 +32,44 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
     abstract public class KCAlgoBase2 : Strategy, ICustomTypeDescriptor
     {
         #region Variables
-		
+
         private DateTime lastEntryTime;
         private readonly TimeSpan tradeDelay = TimeSpan.FromSeconds(10);
-		
+
         // Dictionary to track messages printed by PrintOnce (Key = message key, Value = bar number printed)
         private Dictionary<string, int> printedMessages = new Dictionary<string, int>();
-		
+
 		private bool marketIsChoppy;
 		private bool autoDisabledByChop; // Tracks if Auto was turned off by the system due to chop
 
         // Indicator Variables
-//        private BlueZ.BlueZHMAHooks hullMAHooks;
-//        private bool hmaUp;
-//        private bool hmaDown;
+        public BlueZ.BlueZHMAHooks hullMAHooks;
+        private bool hmaUp;
+        private bool hmaDown;
 
         private BuySellPressure BuySellPressure1;
         private bool buyPressureUp;
         private bool sellPressureUp;
 		private double buyPressure;
-		private double sellPressure;		
+		private double sellPressure;
 
-        private RegressionChannel RegressionChannel1, RegressionChannel2;
-        private RegressionChannelHighLow RegressionChannelHighLow1;
+        public RegressionChannel RegressionChannel1, RegressionChannel2;
+        public RegressionChannelHighLow RegressionChannelHighLow1;
         private bool regChanUp;
         private bool regChanDown;
 
-//        private VMA VMA1;
-//        private bool volMaUp;
-//        private bool volMaDown;
+        public VMA VMA1;
+        private bool volMaUp;
+        private bool volMaDown;
 
         private NTSvePivots pivots;
         private double pivotPoint, s1, s2, s3, r1, r2, r3, s1m, s2m, s3m, r1m, r2m, r3m;
 
 		private Momentum Momentum1;
-		private double currentMomentum;		
+		private double currentMomentum;
         private bool momoUp;
         private bool momoDown;
-		
+
         private ADX ADX1;
 		private double currentAdx;
         private bool adxUp;
@@ -81,8 +81,12 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		private ChoppinessIndex ChoppinessIndex1;
 		private int choppyThreshold = 50;
 		public bool choppyDown;
-        public bool choppyUp;		
+        public bool choppyUp;
 
+//        private bool aboveEMAHigh;
+//        private bool belowEMALow;
+
+//        public bool isTrending;
         private bool uptrend;
         private bool downtrend;
 
@@ -139,7 +143,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private Gui.Chart.ChartTab chartTab;
         private Gui.Chart.Chart chartWindow;
         private System.Windows.Controls.Grid chartTraderGrid, chartTraderButtonsGrid, lowerButtonsGrid;
-		
+
         //		New Toggle Buttons
         private System.Windows.Controls.Button manualBtn, autoBtn, longBtn, shortBtn, quickLongBtn, quickShortBtn;
         private System.Windows.Controls.Button add1Btn, close1Btn, BEBtn, TSBtn, moveTSBtn, moveToBEBtn;
@@ -172,7 +176,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private double totalPnL;
         private double cumPnL;
         private double dailyPnL;
-        private bool canTradeOK = true;
+//        private bool canTradeOK = true;
 
         private bool syncPnl;
         private double historicalTimeTrades;//Sync  PnL
@@ -194,10 +198,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         private bool showAtrTrailOptions;
         private bool showThreeStepTrailOptions;
 
-        private bool enableFixedProfitTarget;		
+        private bool enableFixedProfitTarget;
         private bool enableRegChanProfitTarget;
         private bool enableDynamicProfitTarget;
-		
+
         // Error Handling
         private readonly object orderLock = new object(); // Critical for thread safety
         private Dictionary<string, Order> activeOrders = new Dictionary<string, Order>(); // Track active orders with labels.
@@ -250,25 +254,25 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		private const string MoveTS50PctButton = "MoveTS50PctBtn";
 		private const string MoveToBeButton = "MoveToBeBtn";
 		private const string CloseButton = "CloseBtn";
-		private const string PanicButton = "PanicBtn";		
+		private const string PanicButton = "PanicBtn";
 		private const string DonatePayPalButton = "BuyCoffeeBtn";
 
 		#endregion
-		
-        #region TradeToDiscord
 
-        private ClientWebSocket clientWebSocket;
-        private List<dynamic> signalHistory = new List<dynamic>();
-        private DateTime lastDiscordMessageTime = DateTime.MinValue;
-        private readonly TimeSpan discordRateLimitInterval = TimeSpan.FromSeconds(30); // Adjust the interval as needed
+//        #region TradeToDiscord
 
-        private string lastSignalType = "N/A";
-        private double lastEntryPrice = 0.0;
-        private double lastStopLoss = 0.0;
-        private double lastProfitTarget = 0.0;
-        private DateTime lastSignalTime = DateTime.MinValue;
+//        private ClientWebSocket clientWebSocket;
+//        private List<dynamic> signalHistory = new List<dynamic>();
+//        private DateTime lastDiscordMessageTime = DateTime.MinValue;
+//        private readonly TimeSpan discordRateLimitInterval = TimeSpan.FromSeconds(30); // Adjust the interval as needed
 
-        #endregion
+//        private string lastSignalType = "N/A";
+//        private double lastEntryPrice = 0.0;
+//        private double lastStopLoss = 0.0;
+//        private double lastProfitTarget = 0.0;
+//        private DateTime lastSignalTime = DateTime.MinValue;
+
+//        #endregion
 
         public override string DisplayName { get { return Name; } }
 
@@ -279,15 +283,15 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             {
 				Description									= @"Base Strategy with OEB v.5.0.2 TradeSaber(Dre). and ArchReactor for KC (Khanh Nguyen)";
 				Name										= "KCAlgoBase2";
-				BaseAlgoVersion								= "KCAlgoBase2 v.5.4.0.1 dev";
+				BaseAlgoVersion								= "KCAlgoBase2 v.5.4.0.2";
 				Author										= "indiVGA, Khanh Nguyen, Oshi, based on ArchReactor";
-				Version										= "Version v.5.4.0.1 dev, Apr. 2025";
+				Version										= "Version 5.4.0.2 dev, Apr. 2025";
 				Credits										= "";
 				StrategyName 								= "";
-				ChartType									= "Orenko 34-40-40";	
-				paypal 										= "https://www.paypal.com/signin"; 		
+				ChartType									= "Tbars 20";
+				paypal 										= "https://www.paypal.com/signin";
 
-                EntriesPerDirection = 10;					// This value should limit the number of contracts that the strategy can open per direction.
+                EntriesPerDirection = entriesPerDirection;	// This value should limit the number of contracts that the strategy can open per direction.
 															// It has nothing to do with the parameter defining the entries per direction that we define in the strategy and are controlled by code.
                 Calculate									= Calculate.OnEachTick;
 				EntryHandling 								= EntryHandling.AllEntries;
@@ -305,105 +309,117 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 BarsRequiredToTrade 						= 20;
 				RealtimeErrorHandling 						= RealtimeErrorHandling.StopCancelClose; // important to manage errors on rogue orders
                 IsInstantiatedOnEachOptimizationIteration 	= false;
+
+				isEnableTime2					= true;
+				isEnableTime3					= true;
+				isEnableTime4					= true;
+				isEnableTime5					= true;
 				
                 // Default Parameters
 				isAutoEnabled 					= true;
 				isManualEnabled					= false;
 				isLongEnabled					= true;
 				isShortEnabled					= true;
-				canTradeOK 						= true;
-				
+//				canTradeOK 						= true;
+
 				OrderType						= OrderType.Limit;
-				
+
 		        // Choppiness Defaults
 		        SlopeLookback            		= 4;
-		        FlatSlopeFactor       			= 0.125; 
+		        FlatSlopeFactor       			= 0.125;
 		        ChopAdxThreshold        		= 20;
 				EnableChoppinessDetection 		= true;
 		        marketIsChoppy          		= false;
 		        autoDisabledByChop      		= false;
 				enableBackgroundSignal			= true;
-				Opacity							= 32;       // Byte: 255 opaque
-				
+				Opacity							= 50;       // Byte: 255 opaque
+
+//				isTrending						= true;
+
 				enableBuySellPressure 			= true;
 				showBuySellPressure 			= false;
-				
-//				HmaPeriod 						= 14;
+
+				HmaPeriod 						= 16;
 //				enableHmaHooks 					= true;
-//				showHmaHooks 					= true;
-	
-				RegChanPeriod 					= 40;
+				showHmaHooks 					= true;
+
+				RegChanPeriod 					= 20;
 				RegChanWidth 					= 5;
 				RegChanWidth2 					= 4;
-				enableRegChan1 					= false;
-				enableRegChan2 					= false;
-				showRegChan1 					= false;
-				showRegChan2 					= false;
-				showRegChanHiLo 				= false;
+				enableRegChan1 					= true;
+				enableRegChan2 					= true;
+				showRegChan1 					= true;
+				showRegChan2 					= true;
+				showRegChanHiLo 				= true;
 
 //				enableVMA						= true;
-//				showVMA							= true;
-				
+				showVMA							= true;
+
 				MomoUp							= 1;
 				MomoDown						= -1;
-				enableMomo						= false;
+				enableMomo						= true;
 				showMomo						= false;
-				
+
 				adxPeriod						= 7;
 				AdxThreshold					= 25;
 				adxThreshold2					= 50;
 				adxExitThreshold				= 45;
 				enableADX						= true;
 				showAdx							= false;
-				
+
+//				emaLength						= 110;
+//				enableEMAFilter 				= false;
+//				showEMA							= false;
+
 				AtrPeriod						= 14;
 				atrThreshold					= 1.5;
 				enableVolatility				= true;
-				
+
 				showPivots						= false;
-				
+
 				enableExit						= false;
-				
+
 				LimitOffset						= 4;
-				TickMove						= 4;								
-						
-                MinRegChanTargetDistanceTicks = 60; // Example: Require at least 40 ticks for target
-                MinRegChanStopDistanceTicks   = 100; // Example: Require at least 80 ticks distance for stop
-				
-				EnableFixedProfitTarget			= true; // Default
-                EnableRegChanProfitTarget       = false; 
-				EnableDynamicProfitTarget		= false;
+				TickMove						= 4;
 
 				Contracts						= 1;
 				Contracts2 						= 1;
 				Contracts3 					    = 1;
 				Contracts4						= 1;
-				
-				InitialStop						= 97;
-				
-				ProfitTarget					= 40;
-				ProfitTarget2					= 48;
-				ProfitTarget3					= 56;
-				ProfitTarget4					= 64;
-				
-				EnableProfitTarget2				= true;
-				EnableProfitTarget3				= true;
-				EnableProfitTarget4				= true;
-				
+
+				InitialStop						= 89;
+
+				ProfitTarget					= 120;
+				ProfitTarget2					= 56;
+				ProfitTarget3					= 68;
+				ProfitTarget4					= 80;
+
+				EnableProfitTarget2				= false;
+				EnableProfitTarget3				= false;
+				EnableProfitTarget4				= false;
+
 			//	Set BE Stop
 				BESetAuto						= true;
 				beSetAuto						= true;
 				showctrlBESetAuto				= true;
-				BE_Trigger						= 32;
-				BE_Offset						= 4;
+				BE_Trigger						= 44;
+				BE_Offset						= 0;
 				_beRealized						= false;
 
+				EnableFixedProfitTarget			= false; 
+                EnableRegChanProfitTarget       = true; // Default
+				EnableDynamicProfitTarget		= false;				
+				
 			//	Trailing Stops
 				enableTrail 					= true;
-				tickTrail						= true;
-				showTrailOptions 				= true;	
-				trailStopType 					= TrailStopTypeKC.Tick_Trail;
-				
+				trailStopType 					= TrailStopTypeKC.Regression_Channel_Trail;
+				showTrailOptions 				= true;
+
+                MinRegChanTargetDistanceTicks = 16; // Example: Require at least 40 ticks for target
+                MinRegChanStopDistanceTicks   = 37; // Example: Require at least 100 ticks distance for stop
+
+				tickTrail						= false;
+
 			//	ATR Trail
 				atrTrailSetAuto					= false;
 				showAtrTrailSetAuto				= false;
@@ -412,134 +428,140 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				atrMultiplier					= 1.5;
 				RiskRewardRatio					= 0.75;
 //				Trail_frequency					= 4;
-				
-			//	3 Step Trail	
+
+			//	3 Step Trail
 				showThreeStepTrailOptions 		= false;
 				threeStepTrail					= false;
 				step1ProfitTrigger 				= 1;	// Set your step 1 profit trigger
-                step1StopLoss 					= 97;	// Set your step 1 stop loss
+                step1StopLoss 					= 89;	// Set your step 1 stop loss
                 step2ProfitTrigger 				= 44;	// Set your step 2 profit trigger
-                step2StopLoss 					= 40;	// Set your step 2 stop loss
-				step3ProfitTrigger 				= 52;	// Set your step 3 profit trigger
-				step3StopLoss 					= 16;	// Set your step 3 stop loss
+                step2StopLoss 					= 44;	// Set your step 2 stop loss
+				step3ProfitTrigger 				= 100;	// Set your step 3 profit trigger
+				step3StopLoss 					= 20;	// Set your step 3 stop loss
 //				step1Frequency					= 4;
 //				step2Frequency					= 4;
 //				step3Frequency					= 2;
 				ProgressState 					= 0;
-				
+
 				tradesPerDirection				= false;
 				longPerDirection				= 5;
-				shortPerDirection				= 5;	
-				iBarsSinceExit					= 0;				
-				SecsSinceEntry					= 0;
-				
+				shortPerDirection				= 5;
+//				iBarsSinceExit					= 0;
+//				SecsSinceEntry					= 0;
+
 				QuickLong						= false;
 				QuickShort						= false;
-				
+
 				counterLong						= 0;
 				counterShort					= 0;
-				
-				Start							= DateTime.Parse("06:30", System.Globalization.CultureInfo.InvariantCulture);
-				End								= DateTime.Parse("09:30", System.Globalization.CultureInfo.InvariantCulture);
-				Start2							= DateTime.Parse("11:30", System.Globalization.CultureInfo.InvariantCulture);
-				End2							= DateTime.Parse("13:00", System.Globalization.CultureInfo.InvariantCulture);
-				Start3							= DateTime.Parse("15:00", System.Globalization.CultureInfo.InvariantCulture);
-				End3							= DateTime.Parse("18:00", System.Globalization.CultureInfo.InvariantCulture);
-				Start4							= DateTime.Parse("00:00", System.Globalization.CultureInfo.InvariantCulture);
-				End4							= DateTime.Parse("03:30", System.Globalization.CultureInfo.InvariantCulture);
-				Start5							= DateTime.Parse("06:30", System.Globalization.CultureInfo.InvariantCulture);
-				End5							= DateTime.Parse("13:00", System.Globalization.CultureInfo.InvariantCulture);
+
+				Start							= DateTime.Parse("07:30", System.Globalization.CultureInfo.InvariantCulture);
+				End								= DateTime.Parse("10:25", System.Globalization.CultureInfo.InvariantCulture);
+				Start2							= DateTime.Parse("11:00", System.Globalization.CultureInfo.InvariantCulture);
+				End2							= DateTime.Parse("11:55", System.Globalization.CultureInfo.InvariantCulture);
+				Start3							= DateTime.Parse("12:30", System.Globalization.CultureInfo.InvariantCulture);
+				End3							= DateTime.Parse("13:55", System.Globalization.CultureInfo.InvariantCulture);
+				Start4							= DateTime.Parse("04:00", System.Globalization.CultureInfo.InvariantCulture);
+				End4							= DateTime.Parse("04:55", System.Globalization.CultureInfo.InvariantCulture);
+				Start5							= DateTime.Parse("02:00", System.Globalization.CultureInfo.InvariantCulture);
+				End5							= DateTime.Parse("02:55", System.Globalization.CultureInfo.InvariantCulture);
 				Start6							= DateTime.Parse("00:00", System.Globalization.CultureInfo.InvariantCulture);
 				End6							= DateTime.Parse("23:59", System.Globalization.CultureInfo.InvariantCulture);
-				
+
 				// Panel Status
 				showDailyPnl					= true;
-				PositionDailyPNL				= TextPosition.BottomLeft;	
+				PositionDailyPNL				= TextPosition.BottomLeft;
 				colorDailyProfitLoss			= Brushes.Cyan; // Default value
 				FontSize						= 16;
-				
+
 				showPnl							= false;
 				PositionPnl						= TextPosition.TopLeft;
 				colorPnl 						= Brushes.Yellow; // Default value
-			
+
 				// PnL Daily Limits
 				dailyLossProfit					= true;
 				DailyProfitLimit				= 100000;
-				DailyLossLimit					= 2000;				
+				DailyLossLimit					= 2000;
 				TrailingDrawdown				= 2000;
 				StartTrailingDD					= 0;
 				maxProfit 						= double.MinValue;	// double.MinValue guarantees that any totalPnL will trigger it to set the variable
 				enableTrailingDrawdown 			= true;
-				
+
 				ShowHistorical					= true;
-				
-				useWebHook						= false;
-				DiscordWebhooks					= "https://discord.com/channels/963493404988289124/1343311936736989194";
-				
+
+//				useWebHook						= false;
+//				DiscordWebhooks					= "https://discord.com/channels/963493404988289124/1343311936736989194";
+
             }
             else if (State == State.Configure)
             {
 				// Ensure RealtimeErrorHandling is set
                 RealtimeErrorHandling = RealtimeErrorHandling.StopCancelClose;
-				
-				clientWebSocket = new ClientWebSocket();
+
+//				clientWebSocket = new ClientWebSocket();
             }
             else if (State == State.DataLoaded)
-            {	
+            {
 			    // Initialize maxProfit robustly
 			    maxProfit = double.MinValue; // Initialize to lowest possible value
-			
+
 			    // Initialize PnL variables (assuming strategy starts flat)
 			    totalPnL = 0; // Tracks realized PnL primarily via OnPositionUpdate
 			    cumPnL = 0;   // Tracks realized PnL at session start
 			    dailyPnL = 0;
 
-//				hullMAHooks = BlueZHMAHooks(Close, HmaPeriod, 0, false, false, true, Brushes.Lime, Brushes.Red);
-//				hullMAHooks.Plots[0].Brush = Brushes.White;
-//				hullMAHooks.Plots[0].Width = 2;
-//				if (showHmaHooks) AddChartIndicator(hullMAHooks);
-	
+				hullMAHooks = BlueZHMAHooks(Close, HmaPeriod, 0, false, false, true, Brushes.Lime, Brushes.Red);
+				hullMAHooks.Plots[0].Brush = Brushes.White;
+				hullMAHooks.Plots[0].Width = 2;
+				if (showHmaHooks) AddChartIndicator(hullMAHooks);
+
 				RegressionChannel1 = RegressionChannel(Close, RegChanPeriod, RegChanWidth);
 				if (showRegChan1) AddChartIndicator(RegressionChannel1);
-	
+
 				RegressionChannel2 = RegressionChannel(Close, RegChanPeriod, RegChanWidth2);
 				if (showRegChan2) AddChartIndicator(RegressionChannel2);
-	
+
 				RegressionChannelHighLow1 = RegressionChannelHighLow(Close, RegChanPeriod, RegChanWidth);
 				RegressionChannelHighLow1.Plots[1].Width = 2;
-				RegressionChannelHighLow1.Plots[2].Width = 2;		
+				RegressionChannelHighLow1.Plots[2].Width = 2;
 				if (showRegChanHiLo) AddChartIndicator(RegressionChannelHighLow1);
-	
+
 				BuySellPressure1				= BuySellPressure(Close);
 				BuySellPressure1.Plots[0].Width = 2;
 				BuySellPressure1.Plots[0].Brush = Brushes.Lime;
 				BuySellPressure1.Plots[1].Width = 2;
 				BuySellPressure1.Plots[1].Brush = Brushes.Red;
 				if (showBuySellPressure) AddChartIndicator(BuySellPressure1);
-			
-//				VMA1				= VMA(Close, 9, 9);
-//				VMA1.Plots[0].Brush = Brushes.SkyBlue;
-//				VMA1.Plots[0].Width = 3;
-//				if (showVMA) AddChartIndicator(VMA1);			
-				
+
+				VMA1				= VMA(Close, 9, 9);
+				VMA1.Plots[0].Brush = Brushes.SkyBlue;
+				VMA1.Plots[0].Width = 3;
+				if (showVMA) AddChartIndicator(VMA1);
+
 				ATR1 	= ATR(AtrPeriod);
-				        
-				Momentum1			= Momentum(Close, 14);	
+
+				Momentum1			= Momentum(Close, 14);
 				Momentum1.Plots[0].Brush = Brushes.Yellow;
 				Momentum1.Plots[0].Width = 2;
 				if (showMomo) AddChartIndicator(Momentum1);
-				
+
 				ADX1				= ADX(Close, adxPeriod);
 				ADX1.Plots[0].Brush = Brushes.Yellow;
 				ADX1.Plots[0].Width = 2;
 				if (showAdx) AddChartIndicator(ADX1);
-				
+
 				ChoppinessIndex1 = ChoppinessIndex(Close, 14);
-			
+
 				pivots = NTSvePivots(Close, false, NTSvePivotRange.Daily, NTSveHLCCalculationMode.CalcFromIntradayData, 0, 0, 0, 250);
 				pivots.Plots[0].Width = 4;
 				if (showPivots) AddChartIndicator(pivots);
-				
+
+//				if(showEMA)
+//				{
+//					AddChartIndicator(EMA(High, emaLength));
+//					AddChartIndicator(EMA(Low, emaLength));
+//				}
+
 				if (additionalContractExists)
 			    {
 			        string quickProfitTargetLabel = isLong ? QLE : QSE;  // QLE = Quick Long Entry, QSE = Quick Short Entry
@@ -548,16 +570,16 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             }
 			else if (State == State.Historical)
 			{
-				// Chart Trader Buttons Load	
-				Dispatcher.InvokeAsync((() => {	CreateWPFControls();	}));				
+				// Chart Trader Buttons Load
+				Dispatcher.InvokeAsync((() => {	CreateWPFControls();	}));
 			}
 			else if (State == State.Terminated)
 			{
 				// Chart Trader Buttons dispose
 				ChartControl?.Dispatcher.InvokeAsync(() =>	{	DisposeWPFControls();	});
-				
-				clientWebSocket?.Dispose();	
-				
+
+//				clientWebSocket?.Dispose();
+
 				// Log any remaining active orders
 				lock (orderLock)
 				{
@@ -572,11 +594,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 							CancelOrder(kvp.Value); // IMPORTANT: Cancel rogue orders before terminating.
 						}
 					}
-				}				
+				}
 			}
         }
 		#endregion
-		
+
         #region OnBarUpdate
         protected override void OnBarUpdate()
         {
@@ -584,7 +606,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             if (Time[0] - lastEntryTime < tradeDelay) return;
 
             // Reset trade permission flag for the current bar
-            canTradeOK = true;
+//            canTradeOK = true;
 
             // Basic sanity checks and error handling
             if (BarsInProgress != 0 || CurrentBars[0] < BarsRequiredToTrade || orderErrorOccurred) // Ensure enough bars and no prior errors
@@ -699,6 +721,15 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                   momoUp = !enableMomo; momoDown = !enableMomo;
              }
 
+            // EMA Filter (ensure EMA has enough data)
+//            if (CurrentBar >= emaLength - 1)
+//            {
+//                 aboveEMAHigh = !enableEMAFilter || Open[1] > EMA(High, emaLength)[1];
+//                 belowEMALow = !enableEMAFilter || Open[1] < EMA(Low, emaLength)[1];
+//            } else {
+//                 aboveEMAHigh = !enableEMAFilter; belowEMALow = !enableEMAFilter; // Default if not ready
+//            }
+
             // Price Action
             priceUp = Close[0] > Close[1] && Close[0] > Open[0];
             priceDown = Close[0] < Close[1] && Close[0] < Open[0];
@@ -732,6 +763,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                         isAutoEnabled = false;
                         autoDisabledByChop = true; // System disabled it
                         autoStatusChanged = true;
+//						isTrending = false;
                         PrintOnce($"ChopDisable_{CurrentBar}", $"{Time[0]}: Market choppy. Auto trading DISABLED by system.");
                     }
                 }
@@ -744,7 +776,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                         isAutoEnabled = true;
                         autoDisabledByChop = false; // Clear the flag
                         autoStatusChanged = true;
-                         PrintOnce($"ChopEnable_{CurrentBar}", $"{Time[0]}: Market no longer choppy. Auto trading RE-ENABLED by system.");
+//						isTrending = true;
+                        PrintOnce($"ChopEnable_{CurrentBar}", $"{Time[0]}: Market no longer choppy. Auto trading RE-ENABLED by system.");
                     }
                     // If user turned it off (autoDisabledByChop is false), leave it off.
                 }
@@ -767,8 +800,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
             // --- Define Trend Conditions ---
             // Combine flags calculated above. Ensure flags default reasonably if indicators aren't ready.
+			
             uptrend = adxUp && buyPressureUp && atrUp;
             downtrend = adxUp && sellPressureUp && atrUp;
+			
 
             // --- Update PnL Display Position Based on Trend ---
             // (Consider if this is really needed or if fixed positions are better)
@@ -862,7 +897,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
              KillSwitch(); // Updates maxProfit and checks limits
         }
         #endregion
-		
+
 		#region Transparent Background Color
 		private void TransparentColor(byte percentTransparency, Color baseColor)
 		{
@@ -877,7 +912,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		    BackBrush = semiTransparentBrush;
 		}
 		#endregion
-			
+
 		#region Breakeven Management
 
 		// Helper method to determine the active order labels based on position
@@ -885,7 +920,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		{
 		    List<string> labels = new List<string>();
 		    bool isLongPosition = Position.MarketPosition == MarketPosition.Long;
-		
+
 		    // Add base labels depending on position type (Auto or Quick)
 		    if (isLongPosition)
 		    {
@@ -912,7 +947,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		    // if (/* condition indicating Add1SE might be active */) labels.Add(Add1SE);
 		    return labels;
 		}
-		
+
 		// Helper to safely set TRAILING stop loss (incorporates error handling)
 		private void SetTrailingStop(string fromEntrySignal, CalculationMode mode, double value, bool isSimulatedStop = true)
 		{
@@ -920,12 +955,12 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		     {
 		         // Optional: Check if order already exists and is in a terminal state before modifying
 		         // Relying on SetTrailStop's internal handling but wrap in try-catch.
-		
+
 		         try
 		         {
 		             // Use isSimulatedStop = true to keep strategy in control of trailing logic
 		             SetTrailStop(fromEntrySignal, mode, value, isSimulatedStop);
-		             Print($"{Time[0]}: SetTrailStop called for label '{fromEntrySignal}'. Mode: {mode}, Value: {value}, IsSimulated: {isSimulatedStop}");
+//		             Print($"{Time[0]}: SetTrailStop called for label '{fromEntrySignal}'. Mode: {mode}, Value: {value}, IsSimulated: {isSimulatedStop}");
 		         }
 		         catch (Exception ex)
 		         {
@@ -980,7 +1015,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 // NOTE: Breakeven logic MODIFIES the existing stop. It needs to know if the active stop is fixed or trailing.
                 //       The 'enableTrail' and 'enableFixedStopLoss' flags reflect the strategy setting, NOT necessarily the current stop type on the chart
                 //       if settings were changed mid-trade. It's safer to assume the mode based on the strategy setting *at the time BE triggers*.
- 
+
                 if (enableTrail) // If the strategy is SET to use trailing stops
                 {
                     double currentMarketPrice = Close[0];
@@ -1037,7 +1072,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             }
         }
 		#endregion
-		
+
 		#region Stop Loss Management
 
         // ***** MODIFIED SECTION *****
@@ -1119,7 +1154,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         // ***** END OF MODIFIED SECTION *****
 
 		#endregion
-		
+
 		#region Set Stop Losses
 
         // ***** MODIFIED SECTION *****
@@ -1135,8 +1170,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             double initialStopPrice; // Always calculate price now
 
             // --- Check for Override Condition ---
-            bool useRegChanOverride = (TrailStopType == TrailStopTypeKC.Regression_Channel_Trail && EnableRegChanProfitTarget);
-            int effectiveInitialStopTicks = useRegChanOverride ? 100 : InitialStop; // Use 120 if override is active
+            bool useRegChanOverride = (TrailStopType == TrailStopTypeKC.Regression_Channel_Trail);
+            int effectiveInitialStopTicks = useRegChanOverride ? 87 : InitialStop; // Use 120 if override is active
 
             if (useRegChanOverride)
                  PrintOnce($"SetStopLosses_OverrideStop_{entryOrderLabel}_{CurrentBar}", $"{Time[0]}: RegChan Trail & Target active. Using OVERRIDE InitialStop = {effectiveInitialStopTicks} ticks.");
@@ -1167,7 +1202,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                  return;
             }
 
-            // --- Apply Stop to Primary Label using Explicit Exit Orders 
+            // --- Apply Stop to Primary Label using Explicit Exit Orders
 			SetTrailingStop(entryOrderLabel, CalculationMode.Ticks, initialStopPrice / TickSize, true);
 //            SetFixedStopLoss(entryOrderLabel, CalculationMode.Price, initialStopPrice, false);
              string modeInfo = enableTrail ? "(Intended for Trail)" : "(Fixed)";
@@ -1176,7 +1211,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             // --- Apply Stop to Scaled-In Labels ---
             SetMultipleStopLosses(initialStopPrice, enableTrail);
         }
-		
+
         // (SetMultipleStopLosses does not need changes here as it receives the calculated price)
         // ... SetMultipleStopLosses remains the same ...
         private void SetMultipleStopLosses(double initialStopPrice, bool isTrailingIntendedLater) // Changed parameter name for clarity
@@ -1228,7 +1263,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
 		#endregion
 
-        // ***** MODIFIED SECTION *****
 		#region Stop Loss Management
 
         // The SetFixedStopLoss helper (using Exit...StopMarket) remains unchanged from the previous version
@@ -1374,8 +1408,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		}
 
 		#endregion
-        // ***** END OF MODIFIED SECTION *****
-		
+
 		#region Helper Methods
 
         /// <summary>
@@ -1459,35 +1492,35 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			isLong = Position.MarketPosition == MarketPosition.Long;
 			isShort = Position.MarketPosition == MarketPosition.Short;
 			isFlat = Position.MarketPosition == MarketPosition.Flat;
-			
+
 			entryPrice = Position.AveragePrice;
 			currentPrice = Close[0];
-				
+
 			// Logic to check if additional contracts exist (i.e., more than one contract is held)
-		    additionalContractExists = Position.Quantity > 1;			
+		    additionalContractExists = Position.Quantity > 1;
 		}
 		#endregion
 
-		#region Long Entry			
+		#region Long Entry
 		private void ProcessLongEntry()
 		{
 			if (IsLongEntryConditionMet())
 		    {
 				EnterLongPosition();
 		    }
-		}			
+		}
 		#endregion
-		
+
 		#region Short Entry
 		private void ProcessShortEntry()
 		{
             if (IsShortEntryConditionMet())
 		    {
 				EnterShortPosition();
-		    }	
-		}			
+		    }
+		}
 		#endregion
-			
+
 		#region Entry Condition Checkers
 
         private bool IsLongEntryConditionMet()
@@ -1500,8 +1533,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                    && isFlat
                    && uptrend
                    && !trailingDrawdownReached
-                   && (iBarsSinceExit > 0 ? BarsSinceExitExecution(0, "", 0) > iBarsSinceExit : BarsSinceExitExecution(0, "", 0) > 1 || BarsSinceExitExecution(0, "", 0) == -1)
-                   && canTradeOK
+//                   && (iBarsSinceExit > 0 ? BarsSinceExitExecution(0, "", 0) > iBarsSinceExit : BarsSinceExitExecution(0, "", 0) > 1 || BarsSinceExitExecution(0, "", 0) == -1)
+//                   && canTradeOK
                    && (!TradesPerDirection || (TradesPerDirection && counterLong < longPerDirection));
         }
 
@@ -1514,8 +1547,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				&& isFlat
 				&& downtrend
 				&& !trailingDrawdownReached
-				&& (iBarsSinceExit > 0 ? BarsSinceExitExecution(0, "", 0) > iBarsSinceExit : BarsSinceExitExecution(0, "", 0) > 1 || BarsSinceExitExecution(0, "", 0) == -1)
-				&& canTradeOK
+//				&& (iBarsSinceExit > 0 ? BarsSinceExitExecution(0, "", 0) > iBarsSinceExit : BarsSinceExitExecution(0, "", 0) > 1 || BarsSinceExitExecution(0, "", 0) == -1)
+//				&& canTradeOK
 				&& (!TradesPerDirection || (TradesPerDirection && counterShort < shortPerDirection));
         }
 
@@ -1555,23 +1588,23 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             SetProfitTargets();
 
             // --- 5. Send Discord Signal (Optional, after core logic) ---
-            if (State == State.Realtime)
-            {
-                try // Wrap in try-catch as it involves external communication
-                {
-                    double _entryPrice = baseOrder.AverageFillPrice > 0 ? baseOrder.AverageFillPrice : GetCurrentAsk(); // Use fill price if available, else current Ask
-                    double _stopLoss = _entryPrice - InitialStop * TickSize; // Calculate based on InitialStop
-                    double _profitTarget = _entryPrice + ProfitTarget * TickSize; // Based on primary PT
+//            if (useWebHook && State == State.Realtime)
+//            {
+//                try // Wrap in try-catch as it involves external communication
+//                {
+//                    double _entryPrice = baseOrder.AverageFillPrice > 0 ? baseOrder.AverageFillPrice : GetCurrentAsk(); // Use fill price if available, else current Ask
+//                    double _stopLoss = _entryPrice - InitialStop * TickSize; // Calculate based on InitialStop
+//                    double _profitTarget = _entryPrice + ProfitTarget * TickSize; // Based on primary PT
 
-                    lastSignalType = "LONG";
-                    lastEntryPrice = _entryPrice;
-                    lastStopLoss = _stopLoss;
-                    lastProfitTarget = _profitTarget;
-                    lastSignalTime = Time[0];
-                    _ = SendSignalToDiscordAsync(lastSignalType, lastEntryPrice, lastStopLoss, lastProfitTarget, lastSignalTime);
-                }
-                catch (Exception ex) { Print($"{Time[0]}: Error preparing Discord signal data: {ex.Message}"); }
-            }
+//                    lastSignalType = "LONG";
+//                    lastEntryPrice = _entryPrice;
+//                    lastStopLoss = _stopLoss;
+//                    lastProfitTarget = _profitTarget;
+//                    lastSignalTime = Time[0];
+//                    _ = SendSignalToDiscordAsync(lastSignalType, lastEntryPrice, lastStopLoss, lastProfitTarget, lastSignalTime);
+//                }
+//                catch (Exception ex) { Print($"{Time[0]}: Error preparing Discord signal data: {ex.Message}"); }
+//            }
         }
 
         // ***** MODIFIED SECTION *****
@@ -1604,28 +1637,28 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             SetProfitTargets();
 
             // --- 5. Send Discord Signal (Optional, after core logic) ---
-            if (State == State.Realtime)
-            {
-                try
-                {
-                    double _entryPrice = baseOrder.AverageFillPrice > 0 ? baseOrder.AverageFillPrice : GetCurrentBid(); // Use fill price if available, else current Bid
-                    double _stopLoss = _entryPrice + InitialStop * TickSize;
-                    double _profitTarget = _entryPrice - ProfitTarget * TickSize;
+//            if (useWebHook && State == State.Realtime)
+//            {
+//                try
+//                {
+//                    double _entryPrice = baseOrder.AverageFillPrice > 0 ? baseOrder.AverageFillPrice : GetCurrentBid(); // Use fill price if available, else current Bid
+//                    double _stopLoss = _entryPrice + InitialStop * TickSize;
+//                    double _profitTarget = _entryPrice - ProfitTarget * TickSize;
 
-                    lastSignalType = "SHORT";
-                    lastEntryPrice = _entryPrice;
-                    lastStopLoss = _stopLoss;
-                    lastProfitTarget = _profitTarget;
-                    lastSignalTime = Time[0];
-                    _ = SendSignalToDiscordAsync(lastSignalType, lastEntryPrice, lastStopLoss, lastProfitTarget, lastSignalTime);
-                }
-                 catch (Exception ex) { Print($"{Time[0]}: Error preparing Discord signal data: {ex.Message}"); }
-            }
+//                    lastSignalType = "SHORT";
+//                    lastEntryPrice = _entryPrice;
+//                    lastStopLoss = _stopLoss;
+//                    lastProfitTarget = _profitTarget;
+//                    lastSignalTime = Time[0];
+//                    _ = SendSignalToDiscordAsync(lastSignalType, lastEntryPrice, lastStopLoss, lastProfitTarget, lastSignalTime);
+//                }
+//                 catch (Exception ex) { Print($"{Time[0]}: Error preparing Discord signal data: {ex.Message}"); }
+//            }
         }
         // ***** END OF MODIFIED SECTION *****
 
         #endregion
-		
+
 		#region Order Submission Helpers
 
 		// This method encapsulates all order submissions and error handling.
@@ -1724,10 +1757,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 					} else {
 						Print ($"Error: invalid order label {orderLabel}");
 					}
-					
+
 					if(!activeOrders.ContainsKey(orderLabel))
 						Print ($"Cannot cancel order that does not exist");
-					
+
 					if(activeOrders.TryGetValue(orderLabel, out Order orderToCancel)) {
 						CancelOrder(orderToCancel);
 						activeOrders.Remove(orderLabel);
@@ -1740,7 +1773,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		}
 
 		#endregion
-		
+
 		#region Rogue Order Detection
 
 		private void ReconcileAccountOrders()
@@ -1749,77 +1782,77 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		    {
 		        try
 		        {
-		            // Get all accounts
-		            var accounts = Account.All;
+		            // Get all account
+		            var account = this.Account;
 
-		            if (accounts == null || accounts.Count == 0)
+		            if (account == null)
 		            {
-		                Print(string.Format("{0}: No accounts found.", Time[0]));
+		                Print(string.Format("{0}: No account found.", Time[0]));
 		                return;
 		            }
 
-		            // Iterate through the accounts and reconcile orders
-		            foreach (Account account in accounts)
-		            {
-		                // Get the list of all orders associated with each instrument in that account
-		                List<Order> accountOrders = new List<Order>();
+		            // Iterate through the account and reconcile orders
+//		            foreach (Account account in account)
+//		            {
+//		                // Get the list of all orders associated with each instrument in that account
+//		                List<Order> accountOrders = new List<Order>();
 
-		                try
-		                {
-		                    foreach (Position position in account.Positions)
-		                    {
-		                        Instrument instrument = position.Instrument;
-		                        foreach (Order order in Orders)
-		                        {
-		                            if (order.Instrument == instrument && order.Account == account)
-		                            {
-		                                accountOrders.Add(order);
-		                            }
-		                        }
-		                    }
-		                }
-		                catch (Exception ex)
-		                {
-		                    Print(string.Format("{0}: Error getting orders for account {1}: {2}", Time[0], account.Name, ex.Message));
-		                    continue; // Move to the next account. Don't halt the entire strategy if one account fails.
-		                }
+//		                try
+//		                {
+//		                    foreach (Position position in account.Positions)
+//		                    {
+//		                        Instrument instrument = position.Instrument;
+//		                        foreach (Order order in Orders)
+//		                        {
+//		                            if (order.Instrument == instrument && order.Account == account)
+//		                            {
+//		                                accountOrders.Add(order);
+//		                            }
+//		                        }
+//		                    }
+//		                }
+//		                catch (Exception ex)
+//		                {
+//		                    Print(string.Format("{0}: Error getting orders for account {1}: {2}", Time[0], account.Name, ex.Message));
+//		                    continue; // Move to the next account. Don't halt the entire strategy if one account fails.
+//		                }
 
-		                // Check for nulls and validity of account orders
-		                if (accountOrders == null || accountOrders.Count == 0)
-		                {
-		                    Print(string.Format("{0}: No orders found in account {1}.", Time[0], account.Name));
-		                    continue; //Move to the next account
-		                }
+//		                // Check for nulls and validity of account orders
+//		                if (accountOrders == null || accountOrders.Count == 0)
+//		                {
+//		                    Print(string.Format("{0}: No orders found in account {1}.", Time[0], account.Name));
+//		                    continue; //Move to the next account
+//		                }
 
-						// Create a list of order IDs from activeOrders
-						HashSet<string> strategyOrderIds = new HashSet<string>(activeOrders.Values.Select(o => o.OrderId));
+//						// Create a list of order IDs from activeOrders
+//						HashSet<string> strategyOrderIds = new HashSet<string>(activeOrders.Values.Select(o => o.OrderId));
 
-						// Iterate through the account orders and check if they are tracked by the strategy
-						foreach (Order accountOrder in accountOrders)
-						{
-							// Use null conditional operator for more succinct code
-							if (!strategyOrderIds.Contains(accountOrder?.OrderId))
-							{
-								// This is a rogue order!
-								Print(string.Format("{0}: Rogue order detected! Account: {6} OrderId: {1}, OrderType: {2}, OrderStatus: {3}, Quantity: {4}, AveragePrice: {5}",
-									Time[0], accountOrder.OrderId, accountOrder.OrderType, accountOrder.OrderState, accountOrder.Quantity, accountOrder.AverageFillPrice, account.Name));
+//						// Iterate through the account orders and check if they are tracked by the strategy
+//						foreach (Order accountOrder in accountOrders)
+//						{
+//							// Use null conditional operator for more succinct code
+//							if (!strategyOrderIds.Contains(accountOrder?.OrderId))
+//							{
+//								// This is a rogue order!
+//								Print(string.Format("{0}: Rogue order detected! Account: {6} OrderId: {1}, OrderType: {2}, OrderStatus: {3}, Quantity: {4}, AveragePrice: {5}",
+//									Time[0], accountOrder.OrderId, accountOrder.OrderType, accountOrder.OrderState, accountOrder.Quantity, accountOrder.AverageFillPrice, account.Name));
 
-								// You can either attempt to manage it:
+//								// You can either attempt to manage it:
 
-								// Attempt to cancel the rogue order.  If it's a manual order, you might want to skip this step and just log it.
-								try
-								{
-									CancelOrder(accountOrder);
-									Print(string.Format("{0}: Attempted to cancel rogue order: {1}", Time[0], accountOrder.OrderId));
-								}
-								catch (Exception ex)
-								{
-									Print(string.Format("{0}: Failed to Cancel rogue order. Account: {6} OrderId: {1}, OrderType: {2}, OrderStatus: {3}, Quantity: {4}, AveragePrice: {5}, Reason: {7}",
-										Time[0], accountOrder.OrderId, accountOrder.OrderType, accountOrder.OrderState, accountOrder.Quantity, accountOrder.AverageFillPrice, account.Name, ex.Message));
-								}
-							}
-						}
-		            } // End of account iteration
+//								// Attempt to cancel the rogue order.  If it's a manual order, you might want to skip this step and just log it.
+//								try
+//								{
+//									CancelOrder(accountOrder);
+//									Print(string.Format("{0}: Attempted to cancel rogue order: {1}", Time[0], accountOrder.OrderId));
+//								}
+//								catch (Exception ex)
+//								{
+//									Print(string.Format("{0}: Failed to Cancel rogue order. Account: {6} OrderId: {1}, OrderType: {2}, OrderStatus: {3}, Quantity: {4}, AveragePrice: {5}, Reason: {7}",
+//										Time[0], accountOrder.OrderId, accountOrder.OrderType, accountOrder.OrderState, accountOrder.Quantity, accountOrder.AverageFillPrice, account.Name, ex.Message));
+//								}
+//							}
+//						}
+//		            } // End of account iteration
 		        }
 		        catch (Exception ex)
 		        {
@@ -1830,7 +1863,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		}
 
 		#endregion
-		
+
 		#region Can Submit Order
 
 		// Method to check the minimum interval between order submissions
@@ -1838,11 +1871,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		{
 			return (DateTime.Now - lastOrderActionTime) >= minOrderActionInterval;
 		}
-	
+
 		#endregion
-	
+
 		#region OnExecutionUpdate
-		
+
 		protected virtual void OnExecutionUpdate(Execution execution, string executionId, double price,
                                            int quantity, MarketPosition marketPosition, string orderId,
                                            DateTime time)
@@ -1862,13 +1895,13 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		            Print($"Short Stop Loss adjusted. New FixedStopLossTicks: {InitialStop}");
 		        }
 		    }
-		
+
 		    // *** CRITICAL: Track order fills, modifications, and cancellations ***
 		    lock (orderLock)
 		    {
 		        // Find the order in our activeOrders dictionary
 		        string orderLabel = activeOrders.FirstOrDefault(x => x.Value.OrderId == orderId).Key;
-		
+
 		        if (!string.IsNullOrEmpty(orderLabel))
 		        {
 		            switch (execution.Order.OrderState)
@@ -1876,7 +1909,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		                case OrderState.Filled:
 		                    Print(string.Format("{0}: Order {1} with label {2} filled.", Time[0], orderId, orderLabel));
 		                    activeOrders.Remove(orderLabel); // Remove the order when it's filled.
-		
+
 		                    if (execution.Order.OrderState == OrderState.Filled && isFlat)
 		                    {
 		                        if (execution.Order.Name.StartsWith(LE) || execution.Order.Name.StartsWith(QLE) || execution.Order.Name.StartsWith("Add1LE"))
@@ -1888,19 +1921,19 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		                            counterShort = 0;
 		                        }
 		                    }
-		
+
 		                    break;
-		
+
 		                case OrderState.Cancelled:
 		                    Print(string.Format("{0}: Order {1} with label {2} cancelled.", Time[0], orderId, orderLabel));
 		                    activeOrders.Remove(orderLabel); // Remove cancelled orders
 		                    break;
-		
+
 		                case OrderState.Rejected:
 		                    Print(string.Format("{0}: Order {1} with label {2} rejected.", Time[0], orderId, orderLabel));
 		                    activeOrders.Remove(orderLabel); // Remove rejected orders
 		                    break;
-		
+
 		                default:
 		                    Print(string.Format("{0}: Order {1} with label {2} updated to state: {3}", Time[0], orderId, orderLabel, execution.Order.OrderState));
 		                    break;
@@ -1910,7 +1943,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		        {
 		            // This could indicate a rogue order or an order not tracked by the strategy.
 		            Print(string.Format("{0}: Execution update for order {1}, but order is not tracked by the strategy.", Time[0], orderId));
-		
+
 		            // Attempt to Cancel the Rogue Order
 		            try
 		            {
@@ -1925,9 +1958,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		        }
 		    }
 		}
-		
+
 		#endregion
-		
+
 		#region Pivot Profit Targets
 
         private void SetProfitTargetBasedOnLongConditions()
@@ -1938,7 +1971,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				SetProfitTarget(LE, CalculationMode.Price, s2);
 			else if (Close[0] > s2 && Low[0] <= s2)
 				SetProfitTarget(LE, CalculationMode.Price, s2m);
-			else if (Close[0] > s2m && Low[0] <= s2m)	
+			else if (Close[0] > s2m && Low[0] <= s2m)
 				SetProfitTarget(LE, CalculationMode.Price, s1);
 			else if (Close[0] > s1 && Low[0] <= s1)
 				SetProfitTarget(LE, CalculationMode.Price, s1m);
@@ -1989,7 +2022,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			else if (Close[0] < s3 && High[0] >= s3)
 				SetProfitTarget(@SE, CalculationMode.Ticks, ProfitTarget);
         	}
-		
+
 		private void EnterMultipleLongContracts(bool isManual) {
 			if (enableFixedProfitTarget) {
 				if(isManual) {
@@ -2003,7 +2036,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				}
 			}
 		}
-		
+
 		private void EnterMultipleShortContracts(bool isManual) {
 			if (enableFixedProfitTarget) {
 				if(isManual) {
@@ -2017,7 +2050,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				}
 			}
 		}
-		
+
 		private void EnterMultipleOrders(bool isLong, bool isEnableTarget, string signalName, int contracts)
 		{
 		    if (isEnableTarget)
@@ -2050,9 +2083,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		        }
 		    }
 		}
-		
-		#endregion		
-		
+
+		#endregion
+
 		#region Set Profit Targets
 
         private void SetProfitTargets()
@@ -2110,8 +2143,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             string targetBandName = "";
             bool useFallbackTarget = false; // Flag to indicate fallback
 
-            if (isLong) { targetPrice = RegressionChannel2.Upper[1]; targetBandName = "Upper"; }
-            else if (isShort) { targetPrice = RegressionChannel2.Lower[1]; targetBandName = "Lower"; }
+            if (isLong) { targetPrice = RegressionChannelHighLow1.Upper[0] - 4 * TickSize; targetBandName = "Upper"; }
+            else if (isShort) { targetPrice = RegressionChannelHighLow1.Lower[0] + 4 * TickSize; targetBandName = "Lower"; }
             else return; // Not in position
 
             double priceDifference = isLong ? (targetPrice - entryPrice) : (entryPrice - targetPrice);
@@ -2245,7 +2278,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             // If already printed on this bar, do nothing
         }
         #endregion
-		
+
 		#region Stop Adjustment (Manual Buttons)
 
         // Adjusts the active trailing stop by a specified number of ticks
@@ -2369,8 +2402,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             ForceRefresh(); // Refresh chart UI if needed after manual adjustment
 		}
 
-        #endregion 	
- 
+        #endregion
+
 		#region Move To Breakeven (Manual Buttons) // Keep methods in this region or similar
 
         // Manually moves the active trailing stop to the Breakeven level (+/- offset)
@@ -2391,7 +2424,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
             // Optional: A stricter check might compare PnL directly if needed:
 			double currentUnrealizedPnlTicks = Position.GetUnrealizedProfitLoss(PerformanceUnit.Ticks, Close[0]);
-			
+
             // --- Get Current State ---
             double entryPrice = Position.AveragePrice;
             if (entryPrice == 0) { Print($"{Time[0]}: MoveToBreakeven: Cannot adjust, entry price is 0."); return; } // Safety check
@@ -2402,7 +2435,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             // Move stop to Entry Price +/- Offset ticks
 		    double offsetPriceAdjustment = BE_Offset * TickSize;
 			double targetBreakevenStopPrice = entryPrice + (isLong ? offsetPriceAdjustment : -offsetPriceAdjustment);
-				
+
             Print($"{Time[0]}: MoveToBreakeven: Target BE Stop Price: {targetBreakevenStopPrice:F5} (Entry: {entryPrice:F5}, Offset Ticks: {BE_Offset})");
 
             // --- Validate New Stop Price ---
@@ -2412,20 +2445,20 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		        Print($"{Time[0]}: MoveToBreakeven: Cannot move stop. Target BE price {targetBreakevenStopPrice:F5} invalid relative to current market price {currentMarketPrice:F5}. Position might not be profitable enough.");
 		        return; // Do not proceed
 		    }
-			
+
 			if (currentUnrealizedPnlTicks < BE_Offset) { // Or maybe just < 0 ?
 				Print($"{Time[0]}: MoveToBreakeven: Position not sufficiently profitable (PnL Ticks: {currentUnrealizedPnlTicks:F2} < Offset: {BE_Offset}).");
 				return;
 			}
 
 			// Determine if breakeven conditions are met
-			if (currentUnrealizedPnlTicks >= BE_Offset) 
-			{	
+			if (currentUnrealizedPnlTicks >= BE_Offset)
+			{
 	            // --- Calculate Tick Offset for SetTrailStop (from Entry Price) ---
 	            double breakevenTicks = targetBreakevenStopPrice / TickSize;
-	
+
 	            Print($"{Time[0]}: MoveToBreakeven: Calculated Tick Offset From Entry: {breakevenTicks:F2}");
-	
+
 	            // --- Sanity Check Offset ---
 	            if (breakevenTicks <= 0)
 	            {
@@ -2434,7 +2467,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 	                 // which should only happen with a negative BE_Offset.
 	                 return;
 	            }
-	
+
 	            // --- Apply to Relevant Labels using Safe Helper ---
 			    List<string> orderLabels = GetRelevantOrderLabels();
 	            if (orderLabels.Count == 0)
@@ -2448,7 +2481,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			    {
 			        SetTrailingStop(label, CalculationMode.Ticks, breakevenTicks, true);
 			    }
-	
+
 	            // Mark breakeven as realized if using the flag for logic elsewhere
 	            _beRealized = true; // Set flag after successful manual application
 	            Print($"{Time[0]}: MoveToBreakeven: Manual Breakeven applied. _beRealized set to true.");
@@ -2456,9 +2489,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
 			ForceRefresh(); // Refresh chart UI
 		}
-		
+
         #endregion
-		
+
 		#region Move Trail Stop 50%
 		// Manually moves the active trailing stop closer to the current price by a percentage
 		protected void MoveTrailingStopByPercentage(double percentage)
@@ -2514,7 +2547,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                      return;
                 }
             }
-			
+
             if (currentStopPrice == 0) { Print($"{Time[0]}: MoveTrailingStopByPercentage: Could not determine a valid current stop price. Aborting."); return; }
 
             // --- Calculate New Target Stop Price ---
@@ -2567,7 +2600,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		}
 
         #endregion // End Stop Adjustment region
-		
+
 		#region Button Definitions
 
 		private List<ButtonDefinition> buttonDefinitions;
@@ -2616,7 +2649,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				        strategy.DecorateButton(strategy.autoBtn, strategy.isAutoEnabled ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Auto On", "\uD83D\uDD13 Auto Off");
 				        strategy.Print("Manual Button Clicked. Manual: " + strategy.isManualEnabled);
 				    }
-				},				
+				},
 				new ButtonDefinition
 				{
 					Name = LongButton,
@@ -2878,42 +2911,42 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			button.BorderBrush = Brushes.Black;
 		}
 
-		#endregion		
-		
+		#endregion
+
 		#region Create WPF Controls
 		protected void CreateWPFControls()
 		{
 			//	ChartWindow
 			chartWindow	= System.Windows.Window.GetWindow(ChartControl.Parent) as Gui.Chart.Chart;
-			
+
 			// if not added to a chart, do nothing
 			if (chartWindow == null)
 				return;
 
 			// this is the entire chart trader area grid
 			chartTraderGrid			= (chartWindow.FindFirst("ChartWindowChartTraderControl") as Gui.Chart.ChartTrader).Content as System.Windows.Controls.Grid;
-			
+
 			// this grid contains the existing chart trader buttons
 			chartTraderButtonsGrid	= chartTraderGrid.Children[0] as System.Windows.Controls.Grid;
-			
+
 			InitializeButtonDefinitions(); // Initialize the button definitions
 
 			CreateButtons();
 
 			// this grid is to organize stuff below
 			lowerButtonsGrid = new System.Windows.Controls.Grid();
-			
+
 			// Initialize
     		InitializeButtonGrid();
 
 			addedRow	= new System.Windows.Controls.RowDefinition() { Height = new GridLength(250) };
-			
+
     		// SetButtons
     		SetButtonLocations();
 
     		// AddButtons
-    		AddButtonsToPanel();			
-				
+    		AddButtonsToPanel();
+
 			if (TabSelected())
 				InsertWPFControls();
 
@@ -2921,13 +2954,13 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
 		}
 		#endregion
-		
+
 		#region Create Buttons
 		protected void CreateButtons()
-		{						
+		{
 			// this style (provided by NinjaTrader_MichaelM) gives the correct default minwidth (and colors) to make buttons appear like chart trader buttons
-			Style basicButtonStyle	= System.Windows.Application.Current.FindResource("BasicEntryButton") as Style;			
-	
+			Style basicButtonStyle	= System.Windows.Application.Current.FindResource("BasicEntryButton") as Style;
+
 			manualBtn = CreateButton(ManualButton, basicButtonStyle);
 			autoBtn = CreateButton(AutoButton, basicButtonStyle);
 			longBtn = CreateButton(LongButton, basicButtonStyle);
@@ -2972,7 +3005,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
 			return button;
 		}
-		
+
 		protected void InitializeButtonGrid()
 		{
     		// Create new grid
@@ -2989,39 +3022,39 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
     		{
         		lowerButtonsGrid.RowDefinitions.Add(new System.Windows.Controls.RowDefinition());
     		}
-		}				
+		}
 
 		protected void SetButtonLocations()
 		{
 			// Btn, Column, Row, Column span
-			
+
     		SetButtonLocation(manualBtn, 0, 1);    // Column 0 2 pos
-    		SetButtonLocation(autoBtn, 1, 1);    			
+    		SetButtonLocation(autoBtn, 1, 1);
     		SetButtonLocation(longBtn, 0, 2);
     		SetButtonLocation(shortBtn, 1, 2);
    			SetButtonLocation(quickLongBtn, 0, 3);
-    		SetButtonLocation(quickShortBtn, 1, 3);    	
+    		SetButtonLocation(quickShortBtn, 1, 3);
    			SetButtonLocation(add1Btn, 0, 4);
-    		SetButtonLocation(close1Btn, 1, 4);    		
+    		SetButtonLocation(close1Btn, 1, 4);
    			SetButtonLocation(BEBtn, 0, 5);
-    		SetButtonLocation(TSBtn, 1, 5); 
+    		SetButtonLocation(TSBtn, 1, 5);
 		    SetButtonLocation(moveTSBtn, 0, 6);
-    		SetButtonLocation(moveTS50PctBtn, 1, 6);  
+    		SetButtonLocation(moveTS50PctBtn, 1, 6);
    			SetButtonLocation(moveToBEBtn, 0, 7, 2);
 			SetButtonLocation(closeBtn, 0, 8, 2);
-			SetButtonLocation(panicBtn, 0, 9, 2);			
+			SetButtonLocation(panicBtn, 0, 9, 2);
 			SetButtonLocation(donatePayPalBtn, 0, 10, 2);
-		}		
-		
+		}
+
 		protected void SetButtonLocation(System.Windows.Controls.Button button, int column, int row, int columnSpan = 1)
 		{
     		System.Windows.Controls.Grid.SetColumn(button, column);
     		System.Windows.Controls.Grid.SetRow(button, row);
-    
+
    			if (columnSpan > 1)
         		System.Windows.Controls.Grid.SetColumnSpan(button, columnSpan);
-		}		
-		
+		}
+
 		protected void AddButtonsToPanel()
 		{
     		// Add Buttons to grid
@@ -3034,18 +3067,18 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
     		lowerButtonsGrid.Children.Add(add1Btn);
     		lowerButtonsGrid.Children.Add(close1Btn);
     		lowerButtonsGrid.Children.Add(BEBtn);
-    		lowerButtonsGrid.Children.Add(TSBtn);  
-    		lowerButtonsGrid.Children.Add(moveTSBtn);  
-    		lowerButtonsGrid.Children.Add(moveTS50PctBtn);  
-    		lowerButtonsGrid.Children.Add(moveToBEBtn);    
+    		lowerButtonsGrid.Children.Add(TSBtn);
+    		lowerButtonsGrid.Children.Add(moveTSBtn);
+    		lowerButtonsGrid.Children.Add(moveTS50PctBtn);
+    		lowerButtonsGrid.Children.Add(moveToBEBtn);
 			lowerButtonsGrid.Children.Add(closeBtn);
-			lowerButtonsGrid.Children.Add(panicBtn);			
+			lowerButtonsGrid.Children.Add(panicBtn);
 			lowerButtonsGrid.Children.Add(donatePayPalBtn);
-		}			
+		}
 		#endregion
-		
+
 		#region Buttons Click Events
-		
+
 		protected void OnButtonClick(object sender, RoutedEventArgs rea)
 		{
 			Button button = sender as Button;
@@ -3060,11 +3093,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				Print($"Error: No click action defined for button {button.Name}");
 			}
 		}
-		
+
 		#endregion
-		       
+
 		#region Dispose
-		protected void DisposeWPFControls() 
+		protected void DisposeWPFControls()
 		{
 			if (chartWindow != null)
 			chartWindow.MainTabControl.SelectionChanged -= TabChangedHandler;
@@ -3086,7 +3119,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			UnsubscribeButtonClick(closeBtn);
 			UnsubscribeButtonClick(panicBtn);
 			UnsubscribeButtonClick(donatePayPalBtn);
-	
+
 			RemoveWPFControls();
 		}
 
@@ -3098,14 +3131,14 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			}
 		}
 		#endregion
-		
+
 		#region Insert WPF
 		public void InsertWPFControls()
 		{
 			if (panelActive)
 				return;
-			
-			// add a new row (addedRow) for our lowerButtonsGrid below the ask and bid prices and pnl display			
+
+			// add a new row (addedRow) for our lowerButtonsGrid below the ask and bid prices and pnl display
 			chartTraderGrid.RowDefinitions.Add(addedRow);
 			System.Windows.Controls.Grid.SetRow(lowerButtonsGrid, (chartTraderGrid.RowDefinitions.Count - 1));
 			chartTraderGrid.Children.Add(lowerButtonsGrid);
@@ -3113,13 +3146,13 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			panelActive = true;
 		}
 		#endregion
-		
+
 		#region Remove WPF
 		protected void RemoveWPFControls()
 		{
 			if (!panelActive)
 				return;
-			
+
 			if (chartTraderButtonsGrid != null || lowerButtonsGrid != null)
 			{
 				chartTraderGrid.Children.Remove(lowerButtonsGrid);
@@ -3129,8 +3162,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			panelActive = false;
 		}
 		#endregion
-		
-		#region TabSelcected 
+
+		#region TabSelcected
 		protected bool TabSelected()
 		{
 			bool tabSelected = false;
@@ -3143,7 +3176,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			return tabSelected;
 		}
 		#endregion
-		
+
 		#region TabHandler
 		protected void TabChangedHandler(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
 		{
@@ -3162,8 +3195,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				InsertWPFControls();
 			else
 				RemoveWPFControls();
-		}		
-		#endregion	
+		}
+		#endregion
 
 		#region Close All Positions
 		protected void CloseAllPositions()
@@ -3171,38 +3204,38 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		//	Close actual position manually
         //	Check if there is an open position
 			Print("Position Closing");
-			
-			if(isLong) 
+
+			if(isLong)
 			{
 				// Create the order labels array based on whether additional contracts exist
 		        string[] orderLabels = additionalContractExists ? new[] { LE, LE2, LE3, LE4, QLE, "QLE2", "QLE3", "QLE4" } : new[] { LE };
-		
+
 		        // Apply the initial trailing stop for all relevant orders
 		        foreach (string label in orderLabels)
 		        {
 		            ExitLong("Manual Exit", label);
 		        }
 			}
-			else if(isShort) 
+			else if(isShort)
 			{
 				// Create the order labels array based on whether additional contracts exist
 		        string[] orderLabels = additionalContractExists ? new[] { SE, SE2, SE3, SE4, QSE, "QSE2", "QSE3", "QSE4" } : new[] { SE };
-		
+
 		        // Apply the initial trailing stop for all relevant orders
 		        foreach (string label in orderLabels)
 		        {
 		            ExitShort("Manual Exit", label);
 		        }
-			}		
-		}	
-		
-        protected void FlattenAllPositions()
-        {	    
-			System.Collections.ObjectModel.Collection<Cbi.Instrument> instrumentsToClose = new System.Collections.ObjectModel.Collection<Instrument>();        
-			instrumentsToClose.Add(Position.Instrument);
-			Position.Account.Flatten(instrumentsToClose);		
+			}
 		}
-		
+
+        protected void FlattenAllPositions()
+        {
+			System.Collections.ObjectModel.Collection<Cbi.Instrument> instrumentsToClose = new System.Collections.ObjectModel.Collection<Instrument>();
+			instrumentsToClose.Add(Position.Instrument);
+			Position.Account.Flatten(instrumentsToClose);
+		}
+
 		protected void HandlePayPalDonationClick()
 		{
 			Print("Donate (PayPal) button clicked."); // Log the click
@@ -3215,7 +3248,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		        // MessageBox.Show("PayPal Donation URL is not configured in the strategy parameters.", "Missing URL", MessageBoxButton.OK, MessageBoxImage.Warning);
 		        return; // Exit if no URL is set
 		    }
-		
+
 		    try
 		    {
 		        // Use Process.Start to open the URL in the default browser
@@ -3240,14 +3273,14 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		        Print($"{Time[0]}: Add1: No open position.");
 		        return;
 		    }
-		
+
 		    double currentPositionQty = openPosition.Quantity;
 		    if (currentPositionQty + oneContract > EntriesPerDirection)
 		    {
 		         Print($"{Time[0]}: Add1: Cannot add contract, would exceed EntriesPerDirection limit ({EntriesPerDirection}).");
 		         return;
 		    }
-		
+
 		    try
 		    {
 		        if (isLong && uptrend) // Consider adding more checks if needed
@@ -3295,8 +3328,8 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                     Print($"Cannot close {oneContract} contract. Position quantity ({Position.Quantity}) is less than requested.");
                 }
 			}
-		}	
-		
+		}
+
 		protected void CloseOneContractFromPosition()
 		{
 		 	int contractsToClose = 1;
@@ -3330,7 +3363,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 orderErrorOccurred = true; // Flag error
 		    }
 		}
-		
+
 		protected void AddContractToOpenPosition()
 		{   // Add 1
 			int oneContract = 1;
@@ -3338,35 +3371,35 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		    {
 				if(isLong && uptrend) {
 					if (!quickLongBtnActive)
-					{	
-						EnterLong(oneContract, @LE);	
+					{
+						EnterLong(oneContract, @LE);
 //						EnterMultipleLongContracts(false);
 					}
 					if (quickLongBtnActive)
-					{	
+					{
 						EnterLong(oneContract, @QLE);
 //						EnterMultipleLongContracts(true);
-						
-					}					
-				
+
+					}
+
 				}else if(isShort && downtrend) {
 					if (!quickShortBtnActive)
-					{	
+					{
 						EnterShort(oneContract, @SE);
 //						EnterMultipleShortContracts(false);
-						
+
 					//	if(OrderType == OrderType.Market) EnterShort(oneContract, @SE);
-					//	if(!OrderType == OrderType.Market) EnterShortLimit(oneContract, GetCurrentAsk(0), @SE);	
-					}	
+					//	if(!OrderType == OrderType.Market) EnterShortLimit(oneContract, GetCurrentAsk(0), @SE);
+					}
 					if (quickShortBtnActive)
-					{	
+					{
 						EnterShort(oneContract, @QSE);
 //						EnterMultipleShortContracts(true);
-						
+
 					//	if(OrderType == OrderType.Market) EnterShort(oneContract, @QSE);
 					//	if(!OrderType == OrderType.Market) EnterShortLimit(oneContract, GetCurrentAsk(0), @QSE);
-					}						
-				}	
+					}
+				}
 		        else {
 		            Print("No open position to close contracts from.");
 		        }
@@ -3376,26 +3409,26 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		        Print($"Failed to add contracts due to: {ex.Message}");
 		    }
 		}
-		
+
 		protected void checkPositions()
 		{
 		//	Detect unwanted Positions opened (possible rogue Order?)
 	        double currentPosition = Position.Quantity; // Get current position quantity
-		
+
 			if (isFlat)
 			{
 		        foreach (var order in Orders)
 		        {
 		            if (order != null) CancelOrder(order);
-		        }				
+		        }
 			}
-		}	
-		
+		}
+
 		protected void checkOrder()
 		{
 		// Verify one active order and set myStopPrice and mylimitPrice to be used in changing orders when add or close 1 contracts to open positions
 			activeOrder = false;
-			
+
 			if (Orders.Count != 0)
 			{
 				Print($"{Times[0][0].TimeOfDay} ACTIVE Orders Count:  {Orders.Count}");
@@ -3411,13 +3444,13 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 						{
 							myStopOrder = order;
 							myStopPrice = myStopOrder.StopPrice;
-						}	
-						if (order.IsLimit &&  entrySignal != "Add 1") 
+						}
+						if (order.IsLimit &&  entrySignal != "Add 1")
 						{
 							myLimitPrice = myEntryOrder.LimitPrice;
-							
-						}	
-		            }					
+
+						}
+		            }
 					else if (order.OrderState == OrderState.TriggerPending && entrySignal != "Add 1")
 		            {
 		                if (order.IsStopMarket)
@@ -3427,27 +3460,27 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 						}
 		            }
 					else if (order.OrderState == OrderState.Working && entrySignal != "Add 1")
-		            {						
+		            {
 						if (order.IsLimit)
-						{ 
+						{
 							myTargetOrder = order;
-							myLimitPrice = myTargetOrder.LimitPrice;	
-						}	
-		            }					
+							myLimitPrice = myTargetOrder.LimitPrice;
+						}
+		            }
 		            else
 		            {
 		                Print("La orden " + order.OrderId + " tiene el estado: " + order.OrderState);
-		            }							
+		            }
 		        }
 				Print($"{Times[0][0].TimeOfDay} myEntryOrder NOT null {myEntryOrder.OrderId}  StopPrice:  {myEntryOrder.StopPrice}   LimitPrice  {myEntryOrder.LimitPrice}    orderQuantity {myEntryOrder.Quantity}   tiene el estado: {myEntryOrder.OrderState}  y es del tipo {myEntryOrder.OrderTypeString}");
 				activeOrder = true;
 			}
 		}
-		
+
 		protected bool checkTimers()
 		{
-		//	check we are in timer	
-			if((Times[0][0].TimeOfDay >= Start.TimeOfDay) && (Times[0][0].TimeOfDay < End.TimeOfDay) 
+		//	check we are in timer
+			if((Times[0][0].TimeOfDay >= Start.TimeOfDay) && (Times[0][0].TimeOfDay < End.TimeOfDay)
 					|| (Time2 && Times[0][0].TimeOfDay >= Start2.TimeOfDay && Times[0][0].TimeOfDay <= End2.TimeOfDay)
 					|| (Time3 && Times[0][0].TimeOfDay >= Start3.TimeOfDay && Times[0][0].TimeOfDay <= End3.TimeOfDay)
 					|| (Time4 && Times[0][0].TimeOfDay >= Start4.TimeOfDay && Times[0][0].TimeOfDay <= End4.TimeOfDay)
@@ -3460,14 +3493,14 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			else
 			{
 				return false;
-			}			
+			}
 		}
-		
+
 		protected string GetActiveTimer()
 		{
-		//	check active timer	
+		//	check active timer
 		    TimeSpan currentTime = Times[0][0].TimeOfDay;
-		
+
 		    if ((Times[0][0].TimeOfDay >= Start.TimeOfDay) && (Times[0][0].TimeOfDay < End.TimeOfDay))
 		    {
 		        return $"{Start:HH\\:mm} - {End:HH\\:mm}";
@@ -3492,12 +3525,166 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		    {
 		        return $"{Start6:HH\\:mm} - {End6:HH\\:mm}";
 		    }
-		
+
 		    return "No active timer";
 		}
-		
-		#endregion				
-		
+
+		#endregion
+
+		#region Discord Signal
+//		private async Task SendSignalToDiscordAsync(string direction, double entryPrice, double stopLoss, double profitTarget, DateTime entryTime)
+//		{
+//		    try
+//		    {
+//		        // Check rate limit
+//		        if (DateTime.Now - lastDiscordMessageTime < discordRateLimitInterval)
+//		        {
+//		            Print("Skipping Discord signal due to rate limit.");
+//		            return;
+//		        }
+
+//		        // Update the last sent time
+//		        lastDiscordMessageTime = DateTime.Now;
+
+//		        // Create the embed message for Discord
+//		        var fields = new List<object>
+//		        {
+//		            new { name = "Direction", value = direction, inline = true },
+//		            new { name = "Entry Price", value = entryPrice.ToString("F2"), inline = true },
+//		            new { name = "Stop Loss", value = stopLoss.ToString("F2"), inline = true },
+//		            new { name = "Profit Target", value = profitTarget.ToString("F2"), inline = true },
+//		            new { name = "Time", value = entryTime.ToString("HH:mm:ss"), inline = false }
+//		        };
+
+//		        var embed = new
+//		        {
+//		            title = $"Trade Signal: {direction}",
+//		            color = direction.Contains("LONG") ? 3066993 : 15158332, // Green for long, Red for short
+//		            fields = fields
+//		        };
+
+//		        using (var client = new HttpClient())
+//		        {
+//		            var payload = new { username = "Trading Bot", embeds = new[] { embed } };
+//		            var json = new JavaScriptSerializer().Serialize(payload);
+//		            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+//		            var webhookUrl = DiscordWebhooks;
+
+//		            var response = await client.PostAsync(webhookUrl, content);
+
+//		            if (response.IsSuccessStatusCode)
+//		            {
+//		                Print($"Discord Signal sent: {direction} - Time: {entryTime:HH:mm:ss}");
+//		            }
+//		            else
+//		            {
+//		                Print($"Discord Signal failed: {response.StatusCode} {response.ReasonPhrase}");
+//		            }
+//		        }
+//		    }
+//		    catch (Exception ex)
+//		    {
+//		        Print($"Error sending Discord Signal: {ex.Message}");
+//		    }
+//		}
+		#endregion
+
+		#region Entry Signals & Inits
+
+		protected abstract bool ValidateEntryLong();
+
+		// protected abstract bool CheckLongEntryConditions();
+
+        protected abstract bool ValidateEntryShort();
+
+		// protected abstract bool CheckShortEntryConditions();
+
+        protected virtual bool ValidateExitLong() {
+			return false;
+		}
+
+        protected virtual bool ValidateExitShort() {
+			return false;
+		}
+
+        protected abstract void InitializeIndicators();
+
+        protected virtual void addDataSeries() {}
+
+		#endregion
+
+		#region Daily PNL
+
+		// In OnPositionUpdate (Refined PnL Handling)
+		protected override void OnPositionUpdate(Cbi.Position position, double averagePrice,
+		    int quantity, Cbi.MarketPosition marketPosition)
+		{
+		    // Only perform PnL calculations and checks if either limit control is enabled
+		    if (dailyLossProfit || enableTrailingDrawdown)
+		    {
+		        // This update happens AFTER a trade closes or adjusts.
+		        // totalPnL here gets the latest REALIZED PnL from the system.
+		        // This is suitable for tracking cumPnL for daily reset.
+		        totalPnL = SystemPerformance.RealTimeTrades.TradesPerformance.Currency.CumProfit;
+
+		        // Calculate current TOTAL PnL for limit checks immediately after update
+		        double currentUnrealized = Account.Get(AccountItem.UnrealizedProfitLoss, Currency.UsDollar); // Get current unrealized
+		        double currentTotalPnL = totalPnL + currentUnrealized; // Combine realized + unrealized
+
+		        // Calculate daily PnL based on the difference between current TOTAL PnL and start-of-day REALIZED PnL
+		        // This reflects the total gain/loss *during* the current day.
+		        dailyPnL = currentTotalPnL - cumPnL;
+
+		        // --- Check Limits using currentTotalPnL and updated dailyPnL ---
+
+		        // Check if Trailing Drawdown was hit and if current PnL has recovered above the threshold
+		        if (enableTrailingDrawdown)
+		        {
+		            double currentDrawdownFromPeak = Math.Max(0, maxProfit - currentTotalPnL); // Calculate current drop from peak
+		            if (trailingDrawdownReached && currentDrawdownFromPeak < TrailingDrawdown)
+		            {
+		                trailingDrawdownReached = false;
+		                // Re-enable auto trading ONLY if it was disabled *by the system* due to drawdown
+		                if (!isAutoEnabled) // Check if it needs re-enabling
+		                {
+		                    isAutoEnabled = true; // Cautiously re-enable
+		                    Print($"{Time[0]}: Trailing Drawdown condition lifted ({currentDrawdownFromPeak:C} < {TrailingDrawdown:C}). Auto trading RE-ENABLED.");
+		                    // Update Auto button UI
+		                    ChartControl?.Dispatcher.InvokeAsync(() => {
+		                        DecorateButton(autoBtn, true ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Auto On", "\uD83D\uDD13 Auto Off");
+		                        DecorateButton(manualBtn, !true ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Manual On", "\uD83D\uDD13 Manual Off");
+		                    });
+		                } else {
+		                    Print($"{Time[0]}: Trailing Drawdown condition lifted ({currentDrawdownFromPeak:C} < {TrailingDrawdown:C}). Auto trading was already enabled.");
+		                }
+		            }
+		        }
+
+		        // Only check daily limits if dailyLossProfit is enabled and position is flat
+		        if (isFlat && dailyLossProfit)
+		        {
+		            if (dailyPnL <= -DailyLossLimit)
+		            {
+		                PrintOnce($"DailyLossLimitHit_{CurrentBar}", $"Daily Loss Limit of {DailyLossLimit:C} hit. No More Entries! Daily PnL: {dailyPnL:C} at {Time[0]}");
+		            }
+
+		            if (dailyPnL >= DailyProfitLimit)
+		            {
+		                PrintOnce($"DailyProfitLimitHit_{CurrentBar}", $"Daily Profit Limit of {DailyProfitLimit:C} hit. No more Entries! Daily PnL: {dailyPnL:C} at {Time[0]}");
+		            }
+		        }
+		    }
+
+		    // Always check for rogue positions when flat, regardless of PnL limits
+		    if (isFlat)
+		    {
+		        checkPositions();
+		    }
+		}
+
+		#endregion
+
 		#region DrawPnl
 		protected void ShowPNLStatus() {
 			textLine0 = "Active Timer";
@@ -3507,171 +3694,16 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			textLine4 = "Short Per Direction";
 			textLine5 = $"{counterShort} / {shortPerDirection} | " + (TradesPerDirection ? "On" : "Off");
 			textLine6 = "Bars Since Exit ";
-			textLine7 = $"{iBarsSinceExit}    |    " + (iBarsSinceExit > 1 ?  "On" : "Off");
+//			textLine7 = $"{iBarsSinceExit}    |    " + (iBarsSinceExit > 1 ?  "On" : "Off");
 			string statusPnlText = textLine0 + "\t" + textLine1 + "\n" + textLine2 + "  " + textLine3 + "\n" + textLine4 + "  " + textLine5+ "\n" + textLine6 + "\t";
 			SimpleFont font = new SimpleFont("Arial", FontSize);
-			
+
 			Draw.TextFixed(this, "statusPnl", statusPnlText, PositionPnl, colorPnl, font, Brushes.Transparent, Brushes.Transparent, 0);
-								
-		}
-		#endregion			
-		
-		#region Discord Signal
-		private async Task SendSignalToDiscordAsync(string direction, double entryPrice, double stopLoss, double profitTarget, DateTime entryTime)
-		{
-		    try
-		    {
-		        // Check rate limit
-		        if (DateTime.Now - lastDiscordMessageTime < discordRateLimitInterval)
-		        {
-		            Print("Skipping Discord signal due to rate limit.");
-		            return;
-		        }
-		
-		        // Update the last sent time
-		        lastDiscordMessageTime = DateTime.Now;
-		
-		        // Create the embed message for Discord
-		        var fields = new List<object>
-		        {
-		            new { name = "Direction", value = direction, inline = true },
-		            new { name = "Entry Price", value = entryPrice.ToString("F2"), inline = true },
-		            new { name = "Stop Loss", value = stopLoss.ToString("F2"), inline = true },
-		            new { name = "Profit Target", value = profitTarget.ToString("F2"), inline = true },
-		            new { name = "Time", value = entryTime.ToString("HH:mm:ss"), inline = false }
-		        };
-		
-		        var embed = new
-		        {
-		            title = $"Trade Signal: {direction}",
-		            color = direction.Contains("LONG") ? 3066993 : 15158332, // Green for long, Red for short
-		            fields = fields
-		        };
-		
-		        using (var client = new HttpClient())
-		        {
-		            var payload = new { username = "Trading Bot", embeds = new[] { embed } };
-		            var json = new JavaScriptSerializer().Serialize(payload);
-		            var content = new StringContent(json, Encoding.UTF8, "application/json");
-		
-		            var webhookUrl = DiscordWebhooks;
-		
-		            var response = await client.PostAsync(webhookUrl, content);
-		
-		            if (response.IsSuccessStatusCode)
-		            {
-		                Print($"Discord Signal sent: {direction} - Time: {entryTime:HH:mm:ss}");
-		            }
-		            else
-		            {
-		                Print($"Discord Signal failed: {response.StatusCode} {response.ReasonPhrase}");
-		            }
-		        }
-		    }
-		    catch (Exception ex)
-		    {
-		        Print($"Error sending Discord Signal: {ex.Message}");
-		    }
-		}		
-		#endregion		
-		
-		#region Entry Signals & Inits
-		
-		protected abstract bool ValidateEntryLong(); 
-        	
-		// protected abstract bool CheckLongEntryConditions();	
-		
-        protected abstract bool ValidateEntryShort();
 
-		// protected abstract bool CheckShortEntryConditions();	
-		
-        protected virtual bool ValidateExitLong() {
-			return false;
 		}
-
-        protected virtual bool ValidateExitShort() {
-			return false;
-		}
-		
-		protected abstract void InitializeIndicators();		
-		
-		protected virtual void addDataSeries() {}
-		
 		#endregion
-		
-		#region Daily PNL
-		
-		// In OnPositionUpdate (Refined PnL Handling)
-		protected override void OnPositionUpdate(Cbi.Position position, double averagePrice,
-		    int quantity, Cbi.MarketPosition marketPosition)
-		{
-		    // This update happens AFTER a trade closes or adjusts.
-		    // totalPnL here gets the latest REALIZED PnL from the system.
-		    // This is suitable for tracking cumPnL for daily reset.
-		    totalPnL = SystemPerformance.RealTimeTrades.TradesPerformance.Currency.CumProfit;
-		
-		    // Calculate current TOTAL PnL for limit checks immediately after update
-		    double currentUnrealized = Account.Get(AccountItem.UnrealizedProfitLoss, Currency.UsDollar); // Get current unrealized
-		    double currentTotalPnL = totalPnL + currentUnrealized; // Combine realized + unrealized
-		
-		    // Update maxProfit based on the absolute peak TOTAL PnL encountered so far
-		    // It's better to update this in DrawStrategyPnL or KillSwitch where total PnL is calculated frequently.
-		    // We will primarily rely on the update within DrawStrategyPnL for display purposes.
-		
-		    // Calculate daily PnL based on the difference between current TOTAL PnL and start-of-day REALIZED PnL
-		    // This reflects the total gain/loss *during* the current day.
-		    dailyPnL = currentTotalPnL - cumPnL;
-		
-		    // --- Check Limits using currentTotalPnL and updated dailyPnL ---
-		
-		    // Check if Trailing Drawdown was hit and if current PnL has recovered above the threshold
-		    double currentDrawdownFromPeak = Math.Max(0, maxProfit - currentTotalPnL); // Calculate current drop from peak
-		    if (enableTrailingDrawdown && trailingDrawdownReached && currentDrawdownFromPeak < TrailingDrawdown)
-		    {
-		        trailingDrawdownReached = false;
-		        // Re-enable auto trading ONLY if it was disabled *by the system* due to drawdown
-		        // Preserve manual disabling by user or chop detection.
-		        // Need a specific flag like 'autoDisabledByDrawdown' or check reason for isAutoEnabled being false.
-		        // For simplicity here, let's assume drawdown was the primary reason if isAutoEnabled is false AND trailingDrawdownReached was true.
-		         if (!isAutoEnabled) // Check if it needs re-enabling
-		         {
-		            isAutoEnabled = true; // Cautiously re-enable
-		            Print($"{Time[0]}: Trailing Drawdown condition lifted ({currentDrawdownFromPeak:C} < {TrailingDrawdown:C}). Auto trading RE-ENABLED.");
-		            // Potentially update Auto button UI here if needed
-		            ChartControl?.Dispatcher.InvokeAsync(() => {
-		                DecorateButton(autoBtn, true ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Auto On", "\uD83D\uDD13 Auto Off");
-		                DecorateButton(manualBtn, !true ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Manual On", "\uD83D\uDD13 Manual Off");
-		            });
-		         } else {
-		             Print($"{Time[0]}: Trailing Drawdown condition lifted ({currentDrawdownFromPeak:C} < {TrailingDrawdown:C}). Auto trading was already enabled.");
-		         }
-		    }
 
-
-		    if (isFlat) // Only check daily limits/print messages when flat after a trade update
-		    {
-		        if (dailyLossProfit)
-		        {
-		            if (dailyPnL <= -DailyLossLimit)
-		            {
-		                PrintOnce($"DailyLossLimitHit_{CurrentBar}", $"Daily Loss Limit of {DailyLossLimit:C} hit. No More Entries! Daily PnL: {dailyPnL:C} at {Time[0]}");
-		                // isAutoEnabled = false; // Disable strategy - KillSwitch handles this
-		            }
-		
-		            if (dailyPnL >= DailyProfitLimit)
-		            {
-		                PrintOnce($"DailyProfitLimitHit_{CurrentBar}", $"Daily Profit Limit of {DailyProfitLimit:C} hit. No more Entries! Daily PnL: {dailyPnL:C} at {Time[0]}");
-		                 // isAutoEnabled = false; // Disable strategy - KillSwitch handles this
-		            }
-		        }
-		        checkPositions(); // Optional check for rogue orders when flat
-		    }
-		
-		    // Note: KillSwitch runs on every bar and handles disabling based on Drawdown/Limits more reliably.
-		}
-		
-		#endregion	
-		
+		#region Draw Strategy PnL
 		// In DrawStrategyPnL (Corrected Drawdown and Max Profit)
 		protected void DrawStrategyPnL()
         {
@@ -3782,95 +3814,97 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
               try { Draw.TextFixed(this, "realTimeTradeText", realTimeTradeText, PositionDailyPNL, pnlColor, font, Brushes.Transparent, Brushes.Transparent, 0); }
               catch (Exception ex) { Print($"Error drawing PNL display: {ex.Message}"); }
         }
-				
+		
+		#endregion
+
 		#region KillSwitch
 		// In KillSwitch (Corrected PnL and Drawdown Check)
         protected void KillSwitch()
         {
-            // --- Calculate Current TOTAL PnL ---
-            double currentRealized = 0;
-            double currentUnrealized = 0;
-            double currentTotalPnL = 0;
-
-            // Use Account PnL in Realtime if connected
-            if (State == State.Realtime && Account.Connection != null && Account.Connection.Status == ConnectionStatus.Connected)
+            // Only calculate P/L if either control is enabled
+            if (dailyLossProfit || enableTrailingDrawdown)
             {
-                currentRealized = Account.Get(AccountItem.RealizedProfitLoss, Currency.UsDollar);
-                currentUnrealized = Account.Get(AccountItem.UnrealizedProfitLoss, Currency.UsDollar);
-            }
-            // Use SystemPerformance otherwise (Backtest/Historical/Optimization)
-            // Corrected State Check: Removed State.Optimization
-            else if (State == State.Historical)
-            {
-                currentRealized = SystemPerformance.AllTrades.TradesPerformance.Currency.CumProfit;
-                currentUnrealized = (Position != null && Position.MarketPosition != MarketPosition.Flat)
-                                    ? Position.GetUnrealizedProfitLoss(PerformanceUnit.Currency, Close[0])
-                                    : 0;
-            }
-            currentTotalPnL = currentRealized + currentUnrealized;
+                // --- Calculate Current TOTAL PnL ---
+                double currentRealized = 0;
+                double currentUnrealized = 0;
+                double currentTotalPnL = 0;
 
-            // ... (Rest of KillSwitch remains the same as the previous correct version) ...
+                // Use Account PnL in Realtime if connected
+                if (State == State.Realtime && Account.Connection != null && Account.Connection.Status == ConnectionStatus.Connected)
+                {
+                    currentRealized = Account.Get(AccountItem.RealizedProfitLoss, Currency.UsDollar);
+                    currentUnrealized = Account.Get(AccountItem.UnrealizedProfitLoss, Currency.UsDollar);
+                }
+                // Use SystemPerformance otherwise (Backtest/Historical/Optimization)
+                // Corrected State Check: Removed State.Optimization
+                else if (State == State.Historical)
+                {
+                    currentRealized = SystemPerformance.AllTrades.TradesPerformance.Currency.CumProfit;
+                    currentUnrealized = (Position != null && Position.MarketPosition != MarketPosition.Flat)
+                                        ? Position.GetUnrealizedProfitLoss(PerformanceUnit.Currency, Close[0])
+                                        : 0;
+                }
+                currentTotalPnL = currentRealized + currentUnrealized;
 
-            // --- Update Max Profit ---
-            if (maxProfit == double.MinValue && currentTotalPnL > double.MinValue) maxProfit = currentTotalPnL;
-            else if (currentTotalPnL > maxProfit) maxProfit = currentTotalPnL;
+                // --- Update Max Profit ---
+                if (maxProfit == double.MinValue && currentTotalPnL > double.MinValue) maxProfit = currentTotalPnL;
+                else if (currentTotalPnL > maxProfit) maxProfit = currentTotalPnL;
 
-            // --- Calculate Daily PnL for limit checks ---
-            dailyPnL = currentTotalPnL - cumPnL;
+                // --- Calculate Daily PnL for limit checks ---
+                dailyPnL = currentTotalPnL - cumPnL;
 
-            // --- Determine relevant order labels ---
-            // (Keep label logic from previous correct version)
-            List<string> longOrderLabels = new List<string> { LE, QLE };
-            List<string> shortOrderLabels = new List<string> { SE, QSE };
-            if (EnableProfitTarget2) { longOrderLabels.AddRange(new[] { LE2, "QLE2" }); shortOrderLabels.AddRange(new[] { SE2, "QSE2" }); }
-            if (EnableProfitTarget3) { longOrderLabels.AddRange(new[] { LE3, "QLE3" }); shortOrderLabels.AddRange(new[] { SE3, "QSE3" }); }
-            if (EnableProfitTarget4) { longOrderLabels.AddRange(new[] { LE4, "QLE4" }); shortOrderLabels.AddRange(new[] { SE4, "QSE4" }); }
+                // --- Determine relevant order labels ---
+                List<string> longOrderLabels = new List<string> { LE, QLE };
+                List<string> shortOrderLabels = new List<string> { SE, QSE };
+                if (EnableProfitTarget2) { longOrderLabels.AddRange(new[] { LE2, "QLE2" }); shortOrderLabels.AddRange(new[] { SE2, "QSE2" }); }
+                if (EnableProfitTarget3) { longOrderLabels.AddRange(new[] { LE3, "QLE3" }); shortOrderLabels.AddRange(new[] { SE3, "QSE3" }); }
+                if (EnableProfitTarget4) { longOrderLabels.AddRange(new[] { LE4, "QLE4" }); shortOrderLabels.AddRange(new[] { SE4, "QSE4" }); }
 
+                // --- Check Conditions ---
+                bool shouldDisable = false;
+                string disableReason = "";
+                double currentDrawdownFromPeak = Math.Max(0, maxProfit - currentTotalPnL); // Calculate here for checks
 
-            // --- Check Conditions ---
-            bool shouldDisable = false;
-            string disableReason = "";
-            double currentDrawdownFromPeak = Math.Max(0, maxProfit - currentTotalPnL); // Calculate here for checks
+                if (enableTrailingDrawdown && currentTotalPnL >= StartTrailingDD && currentDrawdownFromPeak >= TrailingDrawdown)
+                {
+                    shouldDisable = true;
+                    disableReason = $"Trailing Drawdown ({currentDrawdownFromPeak:C} >= {TrailingDrawdown:C})";
+                    trailingDrawdownReached = true;
+                }
+                if (dailyLossProfit && dailyPnL <= -DailyLossLimit)
+                {
+                    shouldDisable = true;
+                    disableReason = $"Daily Loss Limit ({dailyPnL:C} <= {-DailyLossLimit:C})";
+                }
+                if (dailyLossProfit && dailyPnL >= DailyProfitLimit)
+                {
+                    shouldDisable = true;
+                    disableReason = $"Daily Profit Limit ({dailyPnL:C} >= {DailyProfitLimit:C})";
+                }
 
-            if (enableTrailingDrawdown && currentTotalPnL >= StartTrailingDD && currentDrawdownFromPeak >= TrailingDrawdown)
-            {
-                shouldDisable = true;
-                disableReason = $"Trailing Drawdown ({currentDrawdownFromPeak:C} >= {TrailingDrawdown:C})";
-                trailingDrawdownReached = true;
-            }
-            if (dailyLossProfit && dailyPnL <= -DailyLossLimit)
-            {
-                shouldDisable = true;
-                disableReason = $"Daily Loss Limit ({dailyPnL:C} <= {-DailyLossLimit:C})";
-            }
-            if (dailyLossProfit && dailyPnL >= DailyProfitLimit)
-            {
-                shouldDisable = true;
-                disableReason = $"Daily Profit Limit ({dailyPnL:C} >= {DailyProfitLimit:C})";
-            }
+                // --- Action: Close all Positions and Disable ---
+                if (shouldDisable && isAutoEnabled)
+                {
+                    Print($"Kill Switch Activated: {disableReason} at {Time[0]}. Flattening position and disabling AUTO trading.");
 
-            // --- Action: Close all Positions and Disable ---
-            if (shouldDisable && isAutoEnabled)
-            {
-                Print($"Kill Switch Activated: {disableReason} at {Time[0]}. Flattening position and disabling AUTO trading.");
+                     // Flatten position safely
+                    if (Position.MarketPosition == MarketPosition.Long && Position.Quantity > 0) { ExitLong(Position.Quantity, "LongExitKillSwitch", ""); }
+                    else if (Position.MarketPosition == MarketPosition.Short && Position.Quantity > 0) { ExitShort(Position.Quantity, "ShortExitKillSwitch", ""); }
+                    else if (Position.MarketPosition != MarketPosition.Flat) { FlattenAllPositions(); Print("Used FlattenAllPositions() as a fallback in KillSwitch."); }
 
-                 // Flatten position safely
-                if (Position.MarketPosition == MarketPosition.Long && Position.Quantity > 0) { ExitLong(Position.Quantity, "LongExitKillSwitch", ""); }
-                else if (Position.MarketPosition == MarketPosition.Short && Position.Quantity > 0) { ExitShort(Position.Quantity, "ShortExitKillSwitch", ""); }
-                else if (Position.MarketPosition != MarketPosition.Flat) { FlattenAllPositions(); Print("Used FlattenAllPositions() as a fallback in KillSwitch."); }
-
-                isAutoEnabled = false;
-                // Update button UI
-                ChartControl?.Dispatcher.InvokeAsync(() => {
-                    DecorateButton(autoBtn, false ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Auto On", "\uD83D\uDD13 Auto Off");
-                    DecorateButton(manualBtn, !false ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Manual On", "\uD83D\uDD13 Manual Off");
-                });
+                    isAutoEnabled = false;
+                    // Update button UI
+                    ChartControl?.Dispatcher.InvokeAsync(() => {
+                        DecorateButton(autoBtn, false ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Auto On", "\uD83D\uDD13 Auto Off");
+                        DecorateButton(manualBtn, !false ? ButtonState.Enabled : ButtonState.Disabled, "\uD83D\uDD12 Manual On", "\uD83D\uDD13 Manual Off");
+                    });
+                }
             }
         }
 		#endregion
-		
-		#region Custom Property Manipulation	
-		
+
+		#region Custom Property Manipulation
+
 		public void ModifyProperties(PropertyDescriptorCollection col)
         {
 			if (TradesPerDirection == false)
@@ -3904,13 +3938,13 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				col.Remove(col.Find("End6", true));
             }
 		}
-		
+
 		public void ModifyBESetAutoProperties(PropertyDescriptorCollection col) {
 			if (showctrlBESetAuto == false) {
 				col.Remove(col.Find("BE_Trigger", true));
 				col.Remove(col.Find("BE_Offset", true));
 			}
-		}		
+		}
 
 		// This method now controls visibility of mode-SPECIFIC parameters
 		public void ModifyProfitTargetProperties(PropertyDescriptorCollection col)
@@ -3949,7 +3983,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 col.Remove(col.Find("ProfitTarget", true));
             }
 		}
-		
+
 		public void ModifyTrailProperties(PropertyDescriptorCollection col) {
 			if (showTrailOptions == false) {
 				col.Remove(col.Find("TrailSetAuto", true));
@@ -3967,10 +4001,10 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				col.Remove(col.Find("step3StopLoss", true));
 				col.Remove(col.Find("step1Frequency", true));
 				col.Remove(col.Find("step2Frequency", true));
-				col.Remove(col.Find("step3Frequency", true));				
+				col.Remove(col.Find("step3Frequency", true));
 			}
-		}	
-		
+		}
+
 		public void ModifyTrailStopTypeProperties(PropertyDescriptorCollection col)
         {
 			// Hide/Show ATR Trail parameters
@@ -4005,7 +4039,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             // Note: Tick_Trail and Fixed_Stop don't have specific parameters controlled *here*
             // Their behavior is controlled by the 'enableTrail' and 'enableFixedStopLoss' flags set by the property setter.
 		}
-		
+
 		public void ModifyTrailSetAutoProperties(PropertyDescriptorCollection col) {
 			if (showAtrTrailSetAuto == false) {
 				col.Remove(col.Find("AtrPeriod", true));
@@ -4013,7 +4047,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				col.Remove(col.Find("RiskRewardRatio", true));
 				col.Remove(col.Find("Trail_frequency", true));
 			}
-		}			
+		}
 
 		public void ModifyThreeStepTrailSetAutoProperties(PropertyDescriptorCollection col) {
 			if (threeStepTrail == false) {
@@ -4022,15 +4056,15 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				col.Remove(col.Find("step3ProfitTrigger", true));
 				col.Remove(col.Find("step1StopLoss", true));
 				col.Remove(col.Find("step2StopLoss", true));
-				col.Remove(col.Find("step3StopLoss", true));				
+				col.Remove(col.Find("step3StopLoss", true));
 				col.Remove(col.Find("step1Frequency", true));
 				col.Remove(col.Find("step2Frequency", true));
-				col.Remove(col.Find("step3Frequency", true));				
+				col.Remove(col.Find("step3Frequency", true));
 			}
 		}
-		
+
 		#endregion
-		
+
 		#region ICustomTypeDescriptor Members
 
         public AttributeCollection GetAttributes()
@@ -4107,63 +4141,63 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         {
             return this;
         }
-		#endregion		
-	
+		#endregion
+
 		#region Properties
 
 		#region 01a. Release Notes
-		
+
 		[ReadOnly(true)]
 		[NinjaScriptProperty]
 		[Display(Name="BaseAlgoVersion", Order=1, GroupName="01a. Release Notes")]
 		public string BaseAlgoVersion
 		{ get; set; }
-		
+
 		[ReadOnly(true)]
 		[NinjaScriptProperty]
 		[Display(Name="Author", Order=2, GroupName="01a. Release Notes")]
 		public string Author
-		{ get; set; }		
-		
+		{ get; set; }
+
 		[ReadOnly(true)]
 		[NinjaScriptProperty]
 //		[ReadOnly(true)]
 		[Display(Name="StrategyName", Order=3, GroupName="01a. Release Notes")]
 		public string StrategyName
 		{ get; set; }
-		
+
 		[ReadOnly(true)]
 		[NinjaScriptProperty]
 //		[ReadOnly(true)]
 		[Display(Name="Version", Order =4, GroupName="01a. Release Notes")]
 		public string Version
 		{ get; set; }
-		
+
 		[ReadOnly(true)]
 		[NinjaScriptProperty]
 //		[ReadOnly(true)]
 		[Display(Name="Credits", Order=5, GroupName="01a. Release Notes")]
 		public string Credits
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="Chart Type", Order=6, GroupName="01a. Release Notes")]
 		public string ChartType
 		{ get; set; }
-		
+
 		#endregion
-		
+
 		#region 01b. Support Developer
-		
+
 		[ReadOnly(true)]
 		[NinjaScriptProperty]
 		[Display(Name = "PayPal Donation URL", Order = 1, GroupName = "01b. Support Developer", Description = "https://www.paypal.com/signin")]
 		public string paypal { get; set; }
-		
+
 		#endregion
 
-		#region 02. Order Settings	
-		
+		#region 02. Order Settings
+
 		[NinjaScriptProperty]
         [RefreshProperties(RefreshProperties.All)]
         [Display(Name="Enable Fixed Profit Target", Order=1, GroupName="02. Order Settings")]
@@ -4215,7 +4249,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                  }
             }
         }
-		
+
         [NinjaScriptProperty]
         [Range(1, int.MaxValue)]
         [Display(Name="Min RegChan Target Distance (Ticks)", Order=3, GroupName="02. Order Settings", Description="Minimum ticks required between entry and RegChan band for it to be used as target. Otherwise, falls back to 'Profit Target'.")]
@@ -4252,104 +4286,108 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
 		[NinjaScriptProperty]
         [Display(Name = "Order Type (Market/Limit)", Order = 6, GroupName = "02. Order Settings")]
-        public OrderType OrderType { get; set; } 
-		
+        public OrderType OrderType { get; set; }
+
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
 		[Display(Name="Limit Order Offset", Order= 7, GroupName="02. Order Settings")]
 		public double LimitOffset
-		{ get; set; }	
-		
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Display(Name = "Entries Per Direction", Order = 8, GroupName = "02. Order Settings")]
+		public int entriesPerDirection { get; set; } = 10;
+
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
-		[Display(Name="Contracts", Order= 8, GroupName="02. Order Settings")]
+		[Display(Name="Contracts", Order= 9, GroupName="02. Order Settings")]
 		public int Contracts
-		{ get; set; }	
-		
+		{ get; set; }
+
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
-		[Display(Name="Tick Move (Button Click)", Order= 9, GroupName="02. Order Settings")]
+		[Display(Name="Tick Move (Button Click)", Order= 10, GroupName="02. Order Settings")]
 		public int TickMove
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
-		[Display(Name="Initial Stop (Ticks)", Order= 10, GroupName="02. Order Settings")]
+		[Display(Name="Initial Stop (Ticks)", Order= 11, GroupName="02. Order Settings")]
 		public int InitialStop
 		{ get; set; }
 
 		[NinjaScriptProperty]
-		[Display(Name="Profit Target", Order=11, GroupName="02. Order Settings")]
+		[Display(Name="Profit Target", Order=12, GroupName="02. Order Settings")]
 		public double ProfitTarget
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
-		[RefreshProperties(RefreshProperties.All)]	
-		[Display(Name="Enable Profit Target 2", Order= 12, GroupName="02. Order Settings")]
+		[RefreshProperties(RefreshProperties.All)]
+		[Display(Name="Enable Profit Target 2", Order= 13, GroupName="02. Order Settings")]
 		public bool EnableProfitTarget2
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
-		[Display(Name="Contract 2", Order= 13, GroupName="02. Order Settings")]
+		[Display(Name="Contract 2", Order= 14, GroupName="02. Order Settings")]
 		public int Contracts2
-		{ get; set; }	
-		
+		{ get; set; }
+
 		[NinjaScriptProperty]
-		[Display(Name="Profit Target 2", Order=14, GroupName="02. Order Settings")]
+		[Display(Name="Profit Target 2", Order=15, GroupName="02. Order Settings")]
 		public double ProfitTarget2
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
-		[RefreshProperties(RefreshProperties.All)]	
-		[Display(Name="Enable Profit Target 3", Order= 15, GroupName="02. Order Settings")]
+		[RefreshProperties(RefreshProperties.All)]
+		[Display(Name="Enable Profit Target 3", Order= 16, GroupName="02. Order Settings")]
 		public bool EnableProfitTarget3
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
-		[Display(Name="Contract 3", Order= 16, GroupName="02. Order Settings")]
+		[Display(Name="Contract 3", Order= 17, GroupName="02. Order Settings")]
 		public int Contracts3
-		{ get; set; }	
-		
+		{ get; set; }
+
 		[NinjaScriptProperty]
-		[Display(Name="Profit Target3", Order=17, GroupName="02. Order Settings")]
+		[Display(Name="Profit Target3", Order=18, GroupName="02. Order Settings")]
 		public double ProfitTarget3
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
-		[RefreshProperties(RefreshProperties.All)]	
-		[Display(Name="Enable Profit Target 4", Order= 18, GroupName="02. Order Settings")]
+		[RefreshProperties(RefreshProperties.All)]
+		[Display(Name="Enable Profit Target 4", Order= 19, GroupName="02. Order Settings")]
 		public bool EnableProfitTarget4
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
-		[Display(Name="Contract 4", Order= 19, GroupName="02. Order Settings")]
+		[Display(Name="Contract 4", Order= 20, GroupName="02. Order Settings")]
 		public int Contracts4
-		{ get; set; }	
-		
+		{ get; set; }
+
 		[NinjaScriptProperty]
-		[Display(Name="Profit Target4", Order=20, GroupName="02. Order Settings")]
+		[Display(Name="Profit Target4", Order=21, GroupName="02. Order Settings")]
 		public double ProfitTarget4
-		{ get; set; }	
-		
-		#endregion	
-		
+		{ get; set; }
+
+		#endregion
+
 		#region 03. Order Management
-				
+
 		[NinjaScriptProperty]
         [Display(ResourceType = typeof(Custom.Resource), Name = "Stop Loss Type", Description= "Type of Trail Stop", GroupName = "03. Order Management", Order = 1)]
         [RefreshProperties(RefreshProperties.All)]
 		public TrailStopTypeKC TrailStopType
-        { 
-			get { return trailStopType; } 
-			set { 
-				trailStopType = value; 
+        {
+			get { return trailStopType; }
+			set {
+				trailStopType = value;
 				if (trailStopType == TrailStopTypeKC.Tick_Trail) {
 					tickTrail = true;
 					enableFixedStopLoss = false;
 					atrTrailSetAuto = false;
-					showAtrTrailSetAuto = false;					
+					showAtrTrailSetAuto = false;
 					showAtrTrailOptions = false;
 					threeStepTrail = false;
 					showThreeStepTrailOptions = false;
@@ -4357,7 +4395,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				else if (trailStopType == TrailStopTypeKC.Fixed_Stop) {
 					enableFixedStopLoss = true;
 					atrTrailSetAuto = false;
-					showAtrTrailSetAuto = false;					
+					showAtrTrailSetAuto = false;
 					showAtrTrailOptions = false;
 					tickTrail = false;
 					threeStepTrail = false;
@@ -4366,7 +4404,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				else if (trailStopType == TrailStopTypeKC.ATR_Trail) {
 					enableFixedStopLoss = false;
 					atrTrailSetAuto = true;
-					showAtrTrailSetAuto = true;					
+					showAtrTrailSetAuto = true;
 					showAtrTrailOptions = true;
 					tickTrail = false;
 					threeStepTrail = false;
@@ -4375,13 +4413,13 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 //					TrailSetAuto = false;
 					enableFixedStopLoss = false;
 					threeStepTrail = true;
-					showThreeStepTrailOptions = true;	
-					showAtrTrailOptions = false;				
+					showThreeStepTrailOptions = true;
+					showAtrTrailOptions = false;
 					atrTrailSetAuto = false;
-					showAtrTrailSetAuto = false;	
+					showAtrTrailSetAuto = false;
 					tickTrail = false;
-				} 
-                else if (trailStopType == TrailStopTypeKC.Regression_Channel_Trail) 
+				}
+                else if (trailStopType == TrailStopTypeKC.Regression_Channel_Trail)
                 {
                     enableTrail = true; // Enable trailing conceptually
                     // No extra parameters needed to show/hide specifically for this yet
@@ -4391,14 +4429,14 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 
 		[NinjaScriptProperty]
 		[Display(Name="ATR Period", Order= 2, GroupName="03. Order Management")]
-		public int AtrPeriod	
+		public int AtrPeriod
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="ATR Trailing Multiplier", Order= 3, GroupName="03. Order Management")]
 		public double atrMultiplier
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="Risk To Reward Ratio", Order= 4, GroupName="03. Order Management")]
 		public double RiskRewardRatio
@@ -4407,25 +4445,25 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 //		[NinjaScriptProperty]
 //		[Display(Name="Trail Frecuency (Ticks)", Order=6, GroupName="03. Order Management - 1. Tick")]
 //		public int Trail_frequency
-//		{ get; set; }	
-		
+//		{ get; set; }
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable ATR Profit Target", Description = "Enable  Profit Target based on TrendMagic", Order = 5, GroupName = "03. Order Management")]
 		[RefreshProperties(RefreshProperties.All)]
-		public bool enableAtrProfitTarget			
+		public bool enableAtrProfitTarget
 		{ get; set; }
-		
-		//Breakeven Actual				
+
+		//Breakeven Actual
 		[NinjaScriptProperty]
-		[RefreshProperties(RefreshProperties.All)]	
-		[Display(Name="Enable Breakeven", Order= 6, GroupName="03. Order Management")]	
+		[RefreshProperties(RefreshProperties.All)]
+		[Display(Name="Enable Breakeven", Order= 6, GroupName="03. Order Management")]
 		public bool BESetAuto
 		{ 	get{
 				return beSetAuto;
-			} 
+			}
 			set {
 				beSetAuto = value;
-				
+
 				if (beSetAuto == true) {
 					showctrlBESetAuto = true;
 				} else {
@@ -4433,7 +4471,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				}
 			}
 		}
-		
+
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
 		[Display(Name="Breakeven Trigger", Order = 7, Description="In Ticks", GroupName="03. Order Management")]
@@ -4443,199 +4481,199 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		[NinjaScriptProperty]
 		[Display(Name="Breakeven Offset", Order = 8, Description="In Ticks", GroupName="03. Order Management")]
 		public int BE_Offset
-		{ get; set; }		
-		
+		{ get; set; }
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Background Color Signal", Description = "Enable Exit", Order = 9, GroupName = "03. Order Management")]
 		[RefreshProperties(RefreshProperties.All)]
 		public bool enableBackgroundSignal
 		{ get; set; }
-		
+
         [NinjaScriptProperty]
 		[Range(0, 360)]
 		[Display(Name = "Background Opacity", Description = "Background Opacity", Order = 10, GroupName = "03. Order Management")]
-		public byte Opacity { get; set; }				
-		
+		public byte Opacity { get; set; }
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Exit", Description = "Enable Exit", Order = 11, GroupName = "03. Order Management")]
 		[RefreshProperties(RefreshProperties.All)]
 		public bool enableExit
 		{ get; set; }
-		
-		
-		#endregion			
+
+
+		#endregion
 
 		#region 04. Three-step Trailing Stop
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="Profit Trigger Step 1", Order = 1, GroupName="04. Three-step Trailing Stop")]
 		public int step1ProfitTrigger
-		{ get; set; }		
-		
+		{ get; set; }
+
 		[NinjaScriptProperty]
 		[Display(Name="Stop Loss Step 1", Order = 2, GroupName="04. Three-step Trailing Stop")]
 		public int step1StopLoss
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="Profit Trigger Step 2", Order = 3, GroupName="04. Three-step Trailing Stop")]
 		public int step2ProfitTrigger
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="Stop Loss Step 2", Order = 4, GroupName="04. Three-step Trailing Stop")]
 		public int step2StopLoss
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="Profit Trigger Step 3", Order = 5, GroupName="04. Three-step Trailing Stop")]
 		public int step3ProfitTrigger
-		{ get; set; }		
-		
+		{ get; set; }
+
 		[NinjaScriptProperty]
 		[Display(Name="Stop Loss Step 3", Order = 6, GroupName="04. Three-step Trailing Stop")]
 		public int step3StopLoss
-		{ get; set; }		
-		
+		{ get; set; }
+
 //		[NinjaScriptProperty]
 //		[Display(Name="Step1Frequency", Order=7, GroupName="04. Three-step Trailing Stop")]
 //		public int step1Frequency
 //		{ get; set; }
-		
+
 //		[NinjaScriptProperty]
 //		[Display(Name="Step2Frequency", Order=8, GroupName="04. Three-step Trailing Stop")]
 //		public int step2Frequency
-//		{ get; set; }			
-		
+//		{ get; set; }
+
 //		[NinjaScriptProperty]
 //		[Display(Name="Step 3 Frequency", Order=9, GroupName="04. Three-step Trailing Stop")]
 //		public int step3Frequency
-//		{ get; set; }	
-		
-		#endregion	
-		
-		#region 05. Profit/Loss Limit	
-		
+//		{ get; set; }
+
+		#endregion
+
+		#region 05. Profit/Loss Limit
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Daily Loss / Profit ", Description = "Enable / Disable Daily Loss & Profit control", Order =1, GroupName = "05. Profit/Loss Limit	")]
 		[RefreshProperties(RefreshProperties.All)]
 		public bool dailyLossProfit
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Range(0, double.MaxValue)]
 		[Display(ResourceType = typeof(Custom.Resource), Name="Daily Profit Limit ($)", Description="No positive or negative sign, just integer", Order=2, GroupName="05. Profit/Loss Limit	")]
 		public double DailyProfitLimit
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Range(0, double.MaxValue)]
 		[Display(ResourceType = typeof(Custom.Resource), Name="Daily Loss Limit ($)", Description="No positive or negative sign, just integer", Order=3, GroupName="05. Profit/Loss Limit	")]
 		public double DailyLossLimit
-		{ get; set; }	
-		
+		{ get; set; }
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Trailing Drawdown", Description = "Enable / Disable trailing drawdown", Order =4, GroupName = "05. Profit/Loss Limit	")]
 		[RefreshProperties(RefreshProperties.All)]
 		public bool enableTrailingDrawdown
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Range(0, double.MaxValue)]
 		[Display(ResourceType = typeof(Custom.Resource), Name="Trailing Drawdown ($)", Description="No positive or negative sign, just integer", Order=5, GroupName="05. Profit/Loss Limit	")]
 		public double TrailingDrawdown
-		{ get; set; }	
-		
+		{ get; set; }
+
 		[NinjaScriptProperty]
 		[Range(0, double.MaxValue)]
 		[Display(ResourceType = typeof(Custom.Resource), Name="Start Trailing Drawdown ($)", Description="No positive or negative sign, just integer", Order=6, GroupName="05. Profit/Loss Limit	")]
 		public double StartTrailingDD
-		{ get; set; }	
-		
+		{ get; set; }
+
 		#endregion
 
-		#region	06. Trades Per Direction	
+		#region	06. Trades Per Direction
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Trades Per Direction", Description = "Switch off Historical Trades to use this option.", Order = 0, GroupName = "06. Trades Per Direction")]
 		[RefreshProperties(RefreshProperties.All)]
-		public bool TradesPerDirection 
+		public bool TradesPerDirection
 		{
-		 	get{return tradesPerDirection;} 
-			set{tradesPerDirection = (value);} 
+		 	get{return tradesPerDirection;}
+			set{tradesPerDirection = (value);}
 		}
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="Long Per Direction", Description = "Number of long in a row", Order = 1, GroupName = "06. Trades Per Direction")]
 		public int longPerDirection
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="Short Per Direction", Description = "Number of short in a row", Order = 2, GroupName = "06. Trades Per Direction")]
 		public int shortPerDirection
 		{ get; set; }
 
 		#endregion
-		
+
 		#region 07. Other Trade Controls
-		
-		[NinjaScriptProperty]
-		[Display(Name="Seconds Since Entry", Description = "Time between orders i seconds", Order = 3, GroupName = "07. Other Trade Controls")]
-		public int SecsSinceEntry
-		{ get; set; }				
-		
-		[NinjaScriptProperty]
-		[Display(Name="Bars Since Exit", Description = "Number of bars that have elapsed since the last specified exit. 0 == Not used. >1 == Use number of bars specified ", Order=4, GroupName="07. Other Trade Controls" )]
-		public int iBarsSinceExit
-		{ get; set; }
-		
+
+//		[NinjaScriptProperty]
+//		[Display(Name="Seconds Since Entry", Description = "Time between orders i seconds", Order = 3, GroupName = "07. Other Trade Controls")]
+//		public int SecsSinceEntry
+//		{ get; set; }
+
+//		[NinjaScriptProperty]
+//		[Display(Name="Bars Since Exit", Description = "Number of bars that have elapsed since the last specified exit. 0 == Not used. >1 == Use number of bars specified ", Order=4, GroupName="07. Other Trade Controls" )]
+//		public int iBarsSinceExit
+//		{ get; set; }
+
 		#endregion
-		
-		#region 08b. Default Settings			
-		
+
+		#region 08b. Default Settings
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Buy Sell Pressure", Order = 1, GroupName = "08b. Default Settings")]
 		public bool enableBuySellPressure { get; set; }
-	
+
 		[NinjaScriptProperty]
 		[Display(Name = "Show Buy Sell Pressure", Order = 2, GroupName = "08b. Default Settings")]
 		public bool showBuySellPressure { get; set; }
-	
+
 //		[NinjaScriptProperty]
 //		[Display(Name = "Enable VMA", Order = 3, GroupName = "08b. Default Settings")]
 //		public bool enableVMA { get; set; }
-	
-//		[NinjaScriptProperty]
-//		[Display(Name = "Show VMA", Order = 4, GroupName = "08b. Default Settings")]
-//		public bool showVMA { get; set; }
-	
+
+		[NinjaScriptProperty]
+		[Display(Name = "Show VMA", Order = 4, GroupName = "08b. Default Settings")]
+		public bool showVMA { get; set; }
+
 //		[NinjaScriptProperty]
 //		[Display(Name = "Enable Hooker", Order = 5, GroupName = "08b. Default Settings")]
 //		public bool enableHmaHooks { get; set; }
-	
-//		[NinjaScriptProperty]
-//		[Display(Name = "Show HMA Hooks", Order = 6, GroupName = "08b. Default Settings")]
-//		public bool showHmaHooks { get; set; }
-	
-//		[NinjaScriptProperty]
-//		[Display(Name = "HMA Period", Order = 7, GroupName = "08b. Default Settings")]
-//		public int HmaPeriod { get; set; }
-	
+
+		[NinjaScriptProperty]
+		[Display(Name = "Show HMA Hooks", Order = 6, GroupName = "08b. Default Settings")]
+		public bool showHmaHooks { get; set; }
+
+		[NinjaScriptProperty]
+		[Display(Name = "HMA Period", Order = 7, GroupName = "08b. Default Settings")]
+		public int HmaPeriod { get; set; }
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable KingKhanh", Order = 8, GroupName = "08b. Default Settings")]
 		public bool enableRegChan1 { get; set; }
-	
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Inner Regression Channel", Order = 9, GroupName = "08b. Default Settings")]
 		public bool enableRegChan2 { get; set; }
-	
+
 		[NinjaScriptProperty]
 		[Display(Name = "Show Outer Regression Channel", Order = 10, GroupName = "08b. Default Settings")]
 		public bool showRegChan1 { get; set; }
-	
+
 		[NinjaScriptProperty]
 		[Display(Name = "Show Inner Regression Channel", Order = 11, GroupName = "08b. Default Settings")]
 		public bool showRegChan2 { get; set; }
-	
+
 		[NinjaScriptProperty]
 		[Display(Name = "Show High and Low Lines", Order = 12, GroupName = "08b. Default Settings")]
 		public bool showRegChanHiLo { get; set; }
@@ -4644,101 +4682,114 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		[Display(Name="Regression Channel Period", Order = 13, GroupName="08b. Default Settings")]
 		public int RegChanPeriod
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="Outer Regression Channel Width", Order = 14, GroupName="08b. Default Settings")]
 		public double RegChanWidth
 		{ get; set; }
-			
+
 		[NinjaScriptProperty]
 		[Display(Name = "Inner Regression Channel Width", Order = 15, GroupName = "08b. Default Settings")]
 		public double RegChanWidth2 { get; set; }
-	
+
 		[NinjaScriptProperty]
         [Display(Name = "Enable Momo", Order = 16, GroupName = "08b. Default Settings")]
         public bool enableMomo { get; set; }
-		
+
 		[NinjaScriptProperty]
         [Display(Name = "Show Momentum", Order = 17, GroupName = "08b. Default Settings")]
         public bool showMomo { get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="Momo Up", Order = 18, GroupName="08b. Default Settings")]
 		public int MomoUp
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="Momo Down", Order = 19, GroupName="08b. Default Settings")]
 		public int MomoDown
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
         [Display(Name = "Enable ADX", Order = 20, GroupName = "08b. Default Settings")]
         public bool enableADX { get; set; }
-		
+
 		[NinjaScriptProperty]
         [Display(Name = "Show ADX", Order = 21, GroupName = "08b. Default Settings")]
         public bool showAdx { get; set; }
-		
+
 		[NinjaScriptProperty]
         [Range(1, int.MaxValue)]
         [Display(Name = "ADX Period", Order = 22, GroupName = "08b. Default Settings")]
         public int adxPeriod { get; set; }
-		
+
 		[NinjaScriptProperty]
         [Range(1, int.MaxValue)]
         [Display(Name = "ADX Threshold 1", Order = 23, GroupName = "08b. Default Settings")]
         public int AdxThreshold { get; set; }
-		
+
 		[NinjaScriptProperty]
         [Range(1, int.MaxValue)]
         [Display(Name = "ADX Threshold 2", Order = 24, GroupName = "08b. Default Settings")]
         public int adxThreshold2 { get; set; }
-		
+
 		[NinjaScriptProperty]
         [Range(1, int.MaxValue)]
         [Display(Name = "ADX Exit Threshold", Order = 25, GroupName = "08b. Default Settings")]
         public int adxExitThreshold { get; set; }
-		
+
 		[NinjaScriptProperty]
         [Display(Name = "Enable Volatility", Order = 26, GroupName = "08b. Default Settings")]
         public bool enableVolatility { get; set; }
-		
+
 		[NinjaScriptProperty]
         [Display(Name="Volatility Threshold", Order = 27, GroupName="08b. Default Settings")]
-        public double atrThreshold { get; set; }		
-		
+        public double atrThreshold { get; set; }
+
+//		[NinjaScriptProperty]
+//        [Display(Name = "Enable EMA Filter", Order = 28, GroupName = "08b. Default Settings")]
+//        public bool enableEMAFilter { get; set; }
+
+//		[NinjaScriptProperty]
+//        [Display(Name = "Show EMA", Order = 29, GroupName = "08b. Default Settings")]
+//        public bool showEMA { get; set; }
+
+//		[NinjaScriptProperty]
+//		[Display(Name="EMA Length", Order = 30, GroupName="08b. Default Settings")]
+//		public int emaLength
+//		{ get; set; }
+
 		[NinjaScriptProperty]
         [Display(Name = "Show Pivots", Order = 31, GroupName = "08b. Default Settings")]
         public bool showPivots { get; set; }
-		
-		#endregion	
-		
-		#region 09. Market Condition		
-		
+
+		#endregion
+
+		#region 09. Market Condition
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Choppiness Detection", Order = 1, GroupName = "09. Market Condition")]
-		public bool EnableChoppinessDetection { get; set; } 
-		
+		public bool EnableChoppinessDetection { get; set; }
+
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
 		[Display(Name="Regression Channel Look Back Period", Description="Period for Regression Channel used in chop detection.", Order=2, GroupName="09. Market Condition")]
 		public int SlopeLookback { get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Range(0.1, 1.0)] // Factor less than 1 to indicate narrower than average
 		[Display(Name="Flat Slope Factor", Description="Factor of slope of Regression Channel indicates flatness.", Order=3, GroupName="09. Market Condition")]
 		public double FlatSlopeFactor { get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Range(1, int.MaxValue)]
 		[Display(Name="Chop ADX Threshold", Description="ADX value below which the market is considered choppy (if RegChan is also flat).", Order=4, GroupName="09. Market Condition")]
 		public int ChopAdxThreshold { get; set; }
-		
+
 		#endregion
 
 		#region 10. Timeframes
-		
+
 		[NinjaScriptProperty]
 		[PropertyEditor("NinjaTrader.Gui.Tools.TimeEditorKey")]
 		[Display(Name="Start Trades", Order=1, GroupName="10. Timeframes")]
@@ -4750,16 +4801,16 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		[Display(Name="End Trades", Order=2, GroupName="10. Timeframes")]
 		public DateTime End
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Time 2", Description = "Enable 2 times.", Order=3, GroupName = "10. Timeframes")]
 		[RefreshProperties(RefreshProperties.All)]
 		public bool Time2
 		{
-		 	get{return isEnableTime2;} 
-			set{isEnableTime2 = (value);} 
+		 	get{return isEnableTime2;}
+			set{isEnableTime2 = (value);}
 		}
-		
+
 		[NinjaScriptProperty]
 		[PropertyEditor("NinjaTrader.Gui.Tools.TimeEditorKey")]
 		[Display(Name="Start Time 2", Order=4, GroupName="10. Timeframes")]
@@ -4771,16 +4822,16 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		[Display(Name="End Time 2", Order=5, GroupName="10. Timeframes")]
 		public DateTime End2
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Time 3", Description = "Enable 3 times.", Order=6, GroupName = "10. Timeframes")]
 		[RefreshProperties(RefreshProperties.All)]
 		public bool Time3
 		{
-		 	get{return isEnableTime3;} 
-			set{isEnableTime3 = (value);} 
+		 	get{return isEnableTime3;}
+			set{isEnableTime3 = (value);}
 		}
-		
+
 		[NinjaScriptProperty]
 		[PropertyEditor("NinjaTrader.Gui.Tools.TimeEditorKey")]
 		[Display(Name="Start Time 3", Order=7, GroupName="10. Timeframes")]
@@ -4792,16 +4843,16 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		[Display(Name="End Time 3", Order=8, GroupName="10. Timeframes")]
 		public DateTime End3
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Time 4", Description = "Enable 4 times.", Order=9, GroupName = "10. Timeframes")]
 		[RefreshProperties(RefreshProperties.All)]
 		public bool Time4
 		{
-		 	get{return isEnableTime4;} 
-			set{isEnableTime4 = (value);} 
+		 	get{return isEnableTime4;}
+			set{isEnableTime4 = (value);}
 		}
-		
+
 		[NinjaScriptProperty]
 		[PropertyEditor("NinjaTrader.Gui.Tools.TimeEditorKey")]
 		[Display(Name="Start Time 4", Order=10, GroupName="10. Timeframes")]
@@ -4813,16 +4864,16 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		[Display(Name="End Time 4", Order=11, GroupName="10. Timeframes")]
 		public DateTime End4
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Time 5", Description = "Enable 5 times.", Order=12, GroupName = "10. Timeframes")]
 		[RefreshProperties(RefreshProperties.All)]
 		public bool Time5
 		{
-		 	get{return isEnableTime5;} 
-			set{isEnableTime5 = (value);} 
+		 	get{return isEnableTime5;}
+			set{isEnableTime5 = (value);}
 		}
-		
+
 		[NinjaScriptProperty]
 		[PropertyEditor("NinjaTrader.Gui.Tools.TimeEditorKey")]
 		[Display(Name="Start Time 5", Order=13, GroupName="10. Timeframes")]
@@ -4834,16 +4885,16 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		[Display(Name="End Time 5", Order=14, GroupName="10. Timeframes")]
 		public DateTime End5
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name = "Enable Time 6", Description = "Enable 6 times.", Order =15, GroupName = "10. Timeframes")]
 		[RefreshProperties(RefreshProperties.All)]
 		public bool Time6
 		{
-		 	get{return isEnableTime6;} 
-			set{isEnableTime6 = (value);} 
+		 	get{return isEnableTime6;}
+			set{isEnableTime6 = (value);}
 		}
-		
+
 		[NinjaScriptProperty]
 		[PropertyEditor("NinjaTrader.Gui.Tools.TimeEditorKey")]
 		[Display(Name="Start Time 6", Order=16, GroupName="10. Timeframes")]
@@ -4855,29 +4906,29 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		[Display(Name="End Time 6", Order=17, GroupName="10. Timeframes")]
 		public DateTime End6
 		{ get; set; }
-		
+
 		#endregion
-		
-		#region 11. Status Panel	
-		
+
+		#region 11. Status Panel
+
 		[NinjaScriptProperty]
         [Display(Name = "Show Daily PnL", Order = 1, GroupName = "11. Status Panel")]
-        public bool showDailyPnl { get; set; }			
-		
+        public bool showDailyPnl { get; set; }
+
 		[XmlIgnore()]
 		[Display(Name = "Daily PnL Color", Order = 2, GroupName = "11. Status Panel")]
 		public Brush colorDailyProfitLoss
-		{ get; set; }	
-		
+		{ get; set; }
+
 		[NinjaScriptProperty]
 		[Display(Name="Daily PnL Position", Description = "Daily PNL Alert Position", Order = 3, GroupName = "11. Status Panel")]
 		public TextPosition PositionDailyPNL
 		{ get; set; }
-		
+
 		[NinjaScriptProperty]
 		[Display(Name = "Font Size", Order = 4, GroupName = "11. Status Panel")]
 		public int FontSize { get; set; }
-	
+
 		// Serialize our Color object
 		[Browsable(false)]
 		public string colorDailyProfitLossSerialize
@@ -4885,21 +4936,21 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			get { return Serialize.BrushToString(colorDailyProfitLoss); }
    			set { colorDailyProfitLoss = Serialize.StringToBrush(value); }
 		}
-		
+
         [NinjaScriptProperty]
         [Display(Name = "Show STATUS PANEL", Order = 5, GroupName = "11. Status Panel")]
-        public bool showPnl { get; set; }		
+        public bool showPnl { get; set; }
 
 		[XmlIgnore()]
 		[Display(Name = "STATUS PANEL Color", Order = 6, GroupName = "11. Status Panel")]
 		public Brush colorPnl
-		{ get; set; }				
-		
+		{ get; set; }
+
 		[NinjaScriptProperty]
 		[Display(Name="STATUS PANEL Position", Description = "Status PNL Position", Order = 7, GroupName = "11. Status Panel")]
-		public TextPosition PositionPnl		
-		{ get; set; }	
-		
+		public TextPosition PositionPnl
+		{ get; set; }
+
 		// Serialize our Color object
 		[Browsable(false)]
 		public string colorPnlSerialize
@@ -4907,44 +4958,44 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			get { return Serialize.BrushToString(colorPnl); }
    			set { colorPnl = Serialize.StringToBrush(value); }
 		}
-		
+
 		[NinjaScriptProperty]
 		[Display(Name="Show Historical Trades", Description = "Show Historical Teorical Trades", Order= 8, GroupName="11. Status Panel")]
 		public bool ShowHistorical
 		{ get; set; }
-		
-        #endregion
-		
-		#region 12. WebHook
 
-		[NinjaScriptProperty]
-		[Display(Name="Activate Discord webhooks", Description="Activate One or more Discord webhooks", GroupName="11. Webhook", Order = 0)]
-		public bool useWebHook { get; set; }		
-		
+        #endregion
+
+//		#region 12. WebHook
+
+//		[NinjaScriptProperty]
+//		[Display(Name="Activate Discord webhooks", Description="Activate One or more Discord webhooks", GroupName="11. Webhook", Order = 0)]
+//		public bool useWebHook { get; set; }
+
 //		[NinjaScriptProperty]
 //		[Display(Name="Discord webhooks", Description="One or more Discord webhooks, separated by comma.", GroupName="11. Webhook", Order = 1)]
 //		[TypeConverter(typeof(NinjaTrader.NinjaScript.AccountNameConverter))]
 //		public string AccountName { get; set; }
-		
-		[NinjaScriptProperty]
-		[Display(Name="Discord webhooks", Description="One or more Discord webhooks, separated by comma.", GroupName="11. Webhook", Order = 2)]
-		public string DiscordWebhooks
-		{ get; set; }
-		
-		#endregion	
-		
+
+//		[NinjaScriptProperty]
+//		[Display(Name="Discord webhooks", Description="One or more Discord webhooks, separated by comma.", GroupName="11. Webhook", Order = 2)]
+//		public string DiscordWebhooks
+//		{ get; set; }
+
+//		#endregion
+
 		#region Trailing Stop Type
 		// Stop Loss Type
 		public enum TrailStopTypeKC
 		{
-			Tick_Trail,			
-            Regression_Channel_Trail,			
-			Three_Step_Trail,			
+			Tick_Trail,
+            Regression_Channel_Trail,
+			Three_Step_Trail,
 			ATR_Trail,
 			Fixed_Stop
 		}
 		#endregion
-		
+
 		#endregion
     }
 }

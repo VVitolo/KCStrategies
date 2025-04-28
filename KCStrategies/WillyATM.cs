@@ -45,7 +45,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 StrategyName = "Willy ATM";
                 Version = "5.2 Apr. 2025";
                 Credits = "Strategy by dbt7 and Khanh Nguyen";
-                ChartType =  "Orenko 34-40-40";	
+                ChartType =  "Tbars 20";	
 				
 				wrUp 			= -20;
 				wrDown			= -80;

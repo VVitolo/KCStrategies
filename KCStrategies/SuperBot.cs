@@ -88,7 +88,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 StrategyName = "SuperBot";
                 Version = "5.2 Apr. 2025";
                 Credits = "Strategy by Khanh Nguyen";
-                ChartType = "Orenko 34-40-40";		
+                ChartType = "Tbars 20";		
 				
 				HmaPeriod			= 16;
 				enableHmaHooks		= true;

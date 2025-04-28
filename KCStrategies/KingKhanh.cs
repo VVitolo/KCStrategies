@@ -47,11 +47,12 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 StrategyName = "KingKhanh";
                 Version = "5.2 Apr. 2025";
                 Credits = "Strategy by Khanh Nguyen";
-                ChartType =  "Orenko 34-40-40";	
+                ChartType =  "Tbars 20";	
 
 				RegChanPeriod	= 40;
-				RegChanWidth	= 4;
-				RegChanWidth2	= 3;
+				RegChanWidth	= 5;
+				RegChanWidth2	= 4;
+				showMomo		= false;
 				
 //                InitialStop		= 93;
 //				ProfitTarget	= 40;

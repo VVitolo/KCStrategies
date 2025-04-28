@@ -46,7 +46,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 StrategyName = "Chaser";
                 Version = "5.2 Feb. 2025";
                 Credits = "Strategy by Khanh Nguyen";
-                ChartType =  "Orenko 34-40-40";
+                ChartType =  "Tbars 20";
 
                 LinRegPeriod 	= 9;
 				

@@ -80,7 +80,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 StrategyName = "SuperBot ATM";
                 Version = "5.2 Apr. 2025";
                 Credits = "Strategy by Khanh Nguyen";
-                ChartType =  "Orenko 34-40-40";	
+                ChartType =  "Tbars 20";
 					
 				HmaPeriod			= 16;
 				enableHmaHooks		= true;
@@ -114,7 +114,7 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 				MomoUp				= 1;
 				MomoDown			= -1;
 				enableMomo			= true;
-				showMomo			= false;
+				showMomo			= true;
 				
 				CmoUp				= 1;
 				CmoDown				= -1;
