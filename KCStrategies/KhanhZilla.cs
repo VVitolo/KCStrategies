@@ -32,15 +32,6 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 {
     public class KhanhZilla : KCAlgoBase2
     {
-//		private RegressionChannelHighLow RegressionChannelHighLow1;	
-//		private BlueZ.BlueZHMAHooks hullMAHooks;
-		private double highestHigh;
-		private double lowestLow;		
-		
-//        private VMA VMA1;
-//        private bool volMaUp;
-//        private bool volMaDown;
-
 		public override string DisplayName { get { return Name; } }
 		
         protected override void OnStateChange()
@@ -50,19 +41,24 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             if (State == State.SetDefaults)
             {
                 Description = "Strategy based on the Linear Regression Channel indicator.";
-                Name = "KhanhZilla v5.2";
+                Name = "KhanhZilla v5.4.3";
                 StrategyName = "KhanhZilla";
-                Version = "5.2 Apr. 2025";
+                Version = "5.4.3 Apr. 2025";
                 Credits = "Strategy by Khanh Nguyen";
                 ChartType = "Tbars 20";	 
 				
-//				HmaPeriod		= 16;
-//				RegChanPeriod	= 20;
-//				RegChanWidth	= 5;
-				showMomo		= true;
-				showVMA			= false;
+		        RegChanPeriod = 40;
+		        RegChanWidth = 5;
+		        RegChanWidth2 = 4;
+		        enableRegChan1 = true;
+		        enableRegChan2 = true;
+		        showRegChan1 = true;
+		        showRegChan2 = true;
+		        showRegChanHiLo = true;
 
-				InitialStop		= 97;
+				LimitOffset = 2;
+				
+				InitialStop		= 105;
 				
 				ProfitTarget	= 60;
 				ProfitTarget2	= 80;
@@ -81,11 +77,15 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             if (CurrentBars[0] < BarsRequiredToTrade)
                 return;			
 			
-			longSignal = (Low[0] > RegressionChannelHighLow1.Lower[1]) 
-				&& (Low[1] == RegressionChannelHighLow1.Lower[1]);
+			longSignal = (Low[0] > RegressionChannelHighLow1.Lower[1] && Low[1] == RegressionChannelHighLow1.Lower[1])
+				|| (Low[0] <= RegressionChannel1.Lower[0])
+				|| (Low[0] < RegressionChannel2.Lower[0])
+				|| (Low[0] <= RegressionChannelHighLow1.Lower[0] + LimitOffset * TickSize);
 
-            shortSignal =  (High[0] < RegressionChannelHighLow1.Upper[1])
-				&& (High[1] == RegressionChannelHighLow1.Upper[1]);
+            shortSignal =  (High[0] < RegressionChannelHighLow1.Upper[1] && High[1] == RegressionChannelHighLow1.Upper[1])
+				|| (High[0] >= RegressionChannel1.Upper[0])
+				|| (High[0] > RegressionChannel2.Upper[0])
+				|| (High[0] >= RegressionChannelHighLow1.Upper[0] - LimitOffset * TickSize);
 			
             base.OnBarUpdate();
         }
