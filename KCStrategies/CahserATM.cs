@@ -28,18 +28,15 @@ using NinjaTrader.NinjaScript.Strategies;
 
 namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 {
-    public class Casher : KCAlgoBase
+    public class CasherATM : ATMAlgoBase
     {
         // Parameters
 		private Momentum Momentum1;
 		
-		private HiLoBands HiLoBands1, HiLoBands2; 
+		private HiLoBands HiLoBands1; 
         private Series<double> highestHigh;
         private Series<double> lowestLow;
 		private Series<double> midline;
-		
-        private Series<double> longTrailStop;
-        private Series<double> shortTrailStop;
 		
 		private bool longSignal = false;
         private bool shortSignal = false;
@@ -57,17 +54,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
                 StrategyName = "Casher";
                 Version = "6.0.0 May 2025";
                 Credits = "Strategy by Khanh Nguyen";
-                ChartType = "Tbars 25 or 50";
+                ChartType =  "Tbars 25, 50";				
 				
 				LookbackPeriod		= 4;
-//				TrailPeriod			= 14;
 				Width				= 2;
 				showHighLow			= true;				
-				
-//				EnableHiLoTrail		= false;
-//				TrailOffset			= 4;
-//				RiskToReward		= 1;
-//				RiskRewardRatio		= RiskToReward;
 				
 		        enableHmaHooks 		= false;
 		        showHmaHooks 		= false;
@@ -79,48 +70,31 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		        enableRegChan2 		= false;
 		        showRegChan1 		= false;
 		        showRegChan2 		= false;
-		        showRegChanHiLo 	= false;				
+		        showRegChanHiLo 	= false;
             }
             else if (State == State.DataLoaded)
             {
 				highestHigh = new Series<double> (this);
 				lowestLow = new Series<double> (this);
-				midline = new Series<double> (this);				
-				
-//				longTrailStop = new Series<double> (this);
-//				shortTrailStop = new Series<double> (this);
+				midline = new Series<double> (this);
 				
                 InitializeIndicators();
             }
         }
-		
-		protected override void OnBarUpdate()
-		{
-		    if (CurrentBars[0] < BarsRequiredToTrade)
+
+        protected override void OnBarUpdate()
+        {
+            if (CurrentBars[0] < BarsRequiredToTrade)
+                return;
+            
+			// Ensure there are enough bars to calculate the average range
+		    if (CurrentBar < LookbackPeriod)
 		        return;
-		    
-		    // Ensure there are enough bars for the HiLoBands indicator's LookbackPeriod.
-		    // Casher's LookbackPeriod property is passed to the HiLoBands indicator.
-		    if (CurrentBar < LookbackPeriod) 
-		        return;
 		
-		    // Check if HiLoBands1 and Momentum1 are ready. 
-		    // NinjaTrader typically handles unready indicators by returning default values (e.g., 0).
-		    // This explicit check is for added safety or if specific non-default initial values are critical.
-		    if (HiLoBands1 == null || Momentum1 == null)
-		    {
-		        // Optional: Log that indicators are not yet ready for calculation on this bar.
-		        // Print($"Bar {CurrentBar}: HiLoBands1 or Momentum1 not ready for Casher strategy logic.");
-		        return;
-		    }
-		
-		    highestHigh[0] = HiLoBands1.Values[0][0]; // Highest High from HiLoBands indicator
-		    lowestLow[0] = HiLoBands1.Values[1][0];   // Lowest Low from HiLoBands indicator
-		    midline[0] = HiLoBands1.Values[2][0];     // Midline from HiLoBands indicator
-		
-//		    shortTrailStop[0] = HiLoBands2.Values[0][0]; // Short trail stop
-//		    longTrailStop[0] = HiLoBands2.Values[1][0];   // Long trail stop
-		    
+			highestHigh[0] = HiLoBands1.Values[0][0];
+			lowestLow[0] = HiLoBands1.Values[1][0];
+			midline[0] = HiLoBands1.Values[2][0];
+			
 		    // --- Long Signal Components ---
 		
 		    // 1. Midline Breakout: Close crosses decisively above the midline on the current bar.
@@ -188,54 +162,9 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 		    shortSignal = (shortMidlineBreakdown || shortMidlineTurn || shortBandRejection || shortLLBandTurn || highCrossBelowMidline || midlineDownTurn)
 		                  && bearishBarConfirm
 		                  && momentumConfirmShort;
-
-		    // Trail stop and profit target logic using HiLoBands
-		    // This logic sets InitialStop (in ticks) and ProfitTarget (in ticks)
-		    // when flat and EnableHiLoTrail is true, based on the newly calculated signals.
-//		    if (isFlat && EnableHiLoTrail) 
-//		    {
-//		        if (longSignal)
-//		        {
-//		            // Potential stop price is TrailOffset ticks below the lowestLow band of the current bar.
-//		            double stopPriceTarget = longTrailStop[0] - (TrailOffset * TickSize);
-//		            // Ensure the stop price target is actually below the current closing price.
-//		            if (lowestLow[0] > 0 && Close[0] > stopPriceTarget && TickSize > 0) 
-//		            {
-//		                double stopRiskDistanceInPrice = Close[0] - stopPriceTarget;
-//		                // Ensure there's a positive risk distance (at least half a tick).
-//		                if (stopRiskDistanceInPrice > (TickSize * 0.5)) 
-//		                {
-//		                    InitialStop = (int)Math.Max(1.0, Math.Round(stopRiskDistanceInPrice / TickSize));
-//		                    if (RiskToReward > 0) // Use the strategy's RiskToReward parameter
-//		                    {
-//		                        ProfitTarget = (int)Math.Max(1.0, Math.Round(InitialStop * RiskToReward));
-//		                    }
-//		                }
-//		            }
-//		        }
-//		        else if (shortSignal)
-//		        {
-//		            // Potential stop price is TrailOffset ticks above the highestHigh band of the current bar.
-//		            double stopPriceTarget = shortTrailStop[0] + (TrailOffset * TickSize);
-//		            // Ensure the stop price target is actually above the current closing price.
-//		            if (highestHigh[0] > 0 && Close[0] < stopPriceTarget && TickSize > 0)
-//		            {
-//		                double stopRiskDistanceInPrice = stopPriceTarget - Close[0];
-//		                 // Ensure there's a positive risk distance (at least half a tick).
-//		                if (stopRiskDistanceInPrice > (TickSize * 0.5)) 
-//		                {
-//		                    InitialStop = (int)Math.Max(1.0, Math.Round(stopRiskDistanceInPrice / TickSize));
-//		                    if (RiskToReward > 0) // Use the strategy's RiskToReward parameter
-//		                    {
-//		                        ProfitTarget = (int)Math.Max(1.0, Math.Round(InitialStop * RiskToReward));
-//		                    }
-//		                }
-//		            }
-//		        }
-//		    }
-		    
-		    base.OnBarUpdate(); // Call the base class OnBarUpdate for its general strategy mechanics
-		}
+			
+			base.OnBarUpdate();
+        }
 
         protected override bool ValidateEntryLong()
         {
@@ -251,6 +180,16 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
             else return false;
         }
 
+       	protected override bool ValidateExitLong()
+        {
+            return false;
+        }
+
+        protected override bool ValidateExitShort()
+        {
+			return false;
+        }
+
         #region Indicators
         protected override void InitializeIndicators()
         {
@@ -259,32 +198,18 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
 			HiLoBands1.Plots[1].Brush = Brushes.Magenta;
 			if (showHighLow) AddChartIndicator(HiLoBands1);
 			
-//			HiLoBands2				= HiLoBands(TrailPeriod, Width);
-			
 			Momentum1			= Momentum(Close, 14);	
 			Momentum1.Plots[0].Brush = Brushes.Yellow;
 			Momentum1.Plots[0].Width = 2;
 			if (showMomo) AddChartIndicator(Momentum1);
+			
         }
         #endregion
 
         #region Properties
-		
-//		[NinjaScriptProperty]
-//        [Display(Name = "Enable High Low Trail", Order = 1, GroupName = "02. Order Settings")]
-//        public bool EnableHiLoTrail { get; set; }
-		
-//		[NinjaScriptProperty]
-//        [Display(Name = "HiLo Trail Period", Order = 2, GroupName="02. Order Settings")]
-//        public int TrailPeriod { get; set; }		
-		
-//		[NinjaScriptProperty]
-//		[Display(Name="Trail Stop Tick Offset", Order = 3, GroupName="02. Order Settings")]
-//		public int TrailOffset
-//		{ get; set; }
 
 //		[NinjaScriptProperty]
-//        [Display(Name = "Risk to Reward Ratio", Order = 4, GroupName="02. Order Settings")]
+//        [Display(Name = "Risk to Reward Ratio", Order = 1, GroupName="02. Order Settings")]
 //        public double RiskToReward { get; set; }		
 		
 		[NinjaScriptProperty]
@@ -303,6 +228,11 @@ namespace NinjaTrader.NinjaScript.Strategies.KCStrategies
         [Display(Name = "Show Momentum", Order = 4, GroupName = "08a. Strategy Settings")]
         public bool showMomo { get; set; }
 		
+//		[NinjaScriptProperty]
+//		[Display(Name="Trail Stop Tick Offset", Order = 5, GroupName="08a. Strategy Settings")]
+//		public int TrailOffset
+//		{ get; set; }
+
         #endregion
     }
 }
